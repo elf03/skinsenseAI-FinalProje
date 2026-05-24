@@ -1,47 +1,61 @@
-# SkinSense AI — Proje Notları
+# 🌸 SkinSense AI
 
-## Hızlı Başlangıç
+## Projenin Amacı
+SkinSense AI, kullanıcıların cilt tiplerini analiz eden ve onlara kişiselleştirilmiş cilt bakım rutinleri ile ürün önerileri (Bioderma, CeraVe, La Roche-Posay vb.) sunan yapay zeka destekli bir platformdur. Google Gemini API kullanarak kullanıcı selfie'leri üzerinden görsel analiz yapar veya detaylı anketlerle cilt durumu (akne, nem, hassasiyet) tespiti sağlar. Ayrıca, kullanıcıların mevcut ürünlerinin içerik listelerini analiz ederek güvenli, dikkat edilmesi gereken veya zararlı maddeleri belirleyip cilde uygunluğunu raporlar.
 
-### 1. Backend'i Başlat
-```
-start_backend.bat dosyasına çift tıklayın
-VEYA:
-cd backend
-python app.py
-```
+## Kullanılan Teknolojiler
+* **Backend:** Python, Flask, Flask-SQLAlchemy, Flask-JWT-Extended
+* **Yapay Zeka:** Google Generative AI (Gemini 1.5 Pro / Flash)
+* **Veri Toplama:** BeautifulSoup4, Requests (Web Scraping)
+* **Frontend:** Vanilla HTML/CSS/JS, Chart.js (Grafikler)
+* **Veritabanı:** SQLite
+* **Tasarım:** Özel CSS Design System (Glassmorphism, Değişkenler)
 
-### 2. Frontend'i Aç
-`frontend/index.html` dosyasını tarayıcınızda açın.
-**VS Code kullanıyorsanız**: Live Server ile açın (http://127.0.0.1:5500)
+## Kurulum Adımları
+1. **Sanal Ortam Oluşturma ve Aktifleştirme:**
+   ```bash
+   cd backend
+   python -m venv venv
+   venv\Scripts\activate
+   ```
+2. **Bağımlılıkların Yüklenmesi:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. **Environment (.env) Dosyasını Oluşturma:**
+   `backend` klasöründe bulunan `.env.example` dosyasını kopyalayarak `.env` olarak adlandırın veya yeni bir dosya oluşturup aşağıdaki değişkenleri doldurun:
+   ```env
+   SECRET_KEY=skinsense-gizli-anahtar
+   JWT_SECRET_KEY=skinsense-jwt-anahtari
+   DATABASE_URL=sqlite:///skinsense.db
+   GEMINI_API_KEY=sizin_gemini_api_keyiniz
+   # Opsiyonel - Şifre sıfırlama mailleri için:
+   MAIL_USERNAME=test@gmail.com
+   MAIL_PASSWORD=gmail_uygulama_sifresi
+   ```
+4. **Veritabanını Başlatma:**
+   ```bash
+   flask db init
+   flask db upgrade
+   ```
+   *(Not: Uygulama `python app.py` ile ilk kez çalıştığında veritabanını ve varsayılan başlangıç ürünlerini otomatik olarak da oluşturur.)*
 
----
+## Geliştirme Komutları
 
-## API Adresi
-http://localhost:5000
+* **Geliştirme Sunucusunu Çalıştırma:**
+  ```bash
+  flask run --debug
+  ```
+  *(Alternatif olarak proje dizinindeki `start_backend.bat` dosyasını kullanabilirsiniz)*
 
-## Gemini API Anahtarı
-1. https://aistudio.google.com adresine gidin
-2. "Get API Key" butonuna tıklayın
-3. `backend/.env` dosyasında `GEMINI_API_KEY=` satırına yapıştırın
-4. Backend'i yeniden başlatın
+* **Veritabanı Şeması Değişikliklerini Uygulama (Migration):**
+  Modellerde bir değişiklik yaptıktan sonra:
+  ```bash
+  flask db migrate -m "degisiklik_aciklamasi"
+  flask db upgrade
+  ```
 
-**API anahtarı olmadan**: Demo modu çalışır, mock veriler kullanılır.
-
-## Email Ayarları (Opsiyonel)
-Şifre sıfırlama kodu gerçek email göndermek için:
-1. Gmail hesabınızda "App Password" oluşturun
-2. `backend/.env` dosyasına doldurun
-3. **Yoksa**: OTP kodu backend console'una yazdırılır
-
----
-
-## Sayfalar
-| Sayfa | Açıklama |
-|-------|----------|
-| index.html | Ana sayfa |
-| auth.html | Giriş / Kayıt |
-| analysis.html | Cilt analizi |
-| results.html | Analiz sonuçları |
-| dashboard.html | Kullanıcı paneli |
-| history.html | Geçmiş + karşılaştırma |
-| ingredient-check.html | İçerik analizi |
+* **Testleri Çalıştırma:**
+  ```bash
+  pytest
+  ```
