@@ -2,38 +2,37 @@
 **DÖNEM PROJESİ — Flask ile Web Uygulaması Geliştirme**
 
 ## 1. Projenin Amacı ve Ne İşe Yaradığı
-SkinSense AI, kullanıcıların cilt analizini (fotoğraf veya anket üzerinden) Google Gemini AI kullanarak gerçekleştiren; akne, nem, gözenek ve hassasiyet gibi problemleri tespit edip kişiye özel sabah/akşam cilt bakım rutinleri ve dermokozmetik ürün önerileri sunan bir web uygulamasıdır. Ayrıca, kullanıcıların ellerindeki ürünlerin içerik listelerini (ingredients) sisteme girerek bu maddelerin cilde uygunluğunu trafik ışığı sistemiyle puanlamasına olanak tanır ve bilinçsiz ürün tüketiminin önüne geçmeyi hedefler.
+Benim bu projeyi yapma amacım, insanların cilt tiplerini kolayca öğrenip cildine zarar vermeyecek doğru ürünleri bulmasını sağlayan bir site yapmaktı. SkinSense AI adını verdiğim bu projede, kullanıcılar bir selfie yükleyebiliyor veya anket doldurabiliyor. Arka planda Google Gemini yapay zekası bu verilere bakıp "senin cildin yağlı/kuru, şu içerikli ürünleri kullan" diye tavsiyeler veriyor. Bir de insanların kozmetik ürünlerinin içindekiler kısmını yazıp, "bu maddeler zararlı mı değil mi" diye kontrol edebilecekleri bir bölüm yaptım. Bence günlük hayatta baya işe yarayacak bir proje oldu.
 
-## 2. Mimari Özet (Klasör Yapısı ve Ana Akışlar)
-Proje, Frontend (Kullanıcı arayüzü) ve Backend (Sunucu) olarak iki ayrık klasör yapısında kurgulanmıştır.
-- `backend/`: Flask, SQLAlchemy Modelleri, API Route'ları (Auth, Analysis, Products, Ingredients) ve Servisler (Gemini, Web Scraper, Email).
-- `frontend/`: HTML, CSS (Vanilla), API çağrıları için `api.js` ve arayüz dosyaları.
+## 2. Mimari Özet (Klasör Yapısı ve Akış)
+Açıkçası ilk başta kodları hep tek bir dosyaya yazıyordum ama çok karışmaya başlayınca projeyi Frontend ve Backend diye ayırmak zorunda kaldım.
+- **Frontend:** Sadece HTML, CSS ve JavaScript kullandım. (React vs. kullanmadım çünkü daha yeni öğreniyorum ve basit tutmak istedim).
+- **Backend:** Flask ile yazdım. Veritabanı olarak da SQLite kullandım çünkü kurulumu çok kolaydı.
 
-**Ana Akış Diyagramı:**
+**Sistem şöyle çalışıyor:**
 ```mermaid
 graph TD;
-    Client[Tarayıcı / Frontend] -->|REST API İstekleri| FlaskApp[Flask Backend]
-    FlaskApp -->|Auth / OTP| EmailService[Email Servisi]
-    FlaskApp -->|Görsel & Metin İstemi| GeminiAPI[Google Gemini API]
-    FlaskApp -->|Ürün Verisi Çekme| WebScraper[Scraping Servisi]
-    FlaskApp -->|Veri Okuma/Yazma| DB[(SQLite Veritabanı)]
+    Kullanici[Kullanıcı Tarayıcısı] -->|Fotoğraf veya Metin| Flask[Flask Sunucusu]
+    Flask -->|Analiz İsteği| Gemini[Google Gemini AI]
+    Flask -->|Kayıt/Ürünler| Veritabani[(SQLite)]
+    Gemini -->|Cevap Döner| Flask
+    Flask -->|Ekrana Basar| Kullanici
 ```
 
-## 3. Vibe Coding Deneyimi: Ne İşe Yaradı, Nerede Zorlanıldı?
-**Vibe coding (yapay zeka yönlendirmeli kodlama)** süreci, özellikle arayüz tasarımı (CSS ile glassmorphism, renk paleti yönetimi) ve sıkıcı boilerplate (taslak) kodların (SQLAlchemy modelleri, Flask iskeleti) yazımında inanılmaz bir hız kazandırdı. "Rengi biraz daha toz pembe yap, şu butona hover efekti ver" gibi doğal dildeki direktiflerle anında sonuç almak geliştirme sürecini çok keyifli kıldı. 
-**Zorlanılan nokta ise**, AI'ın bağlamdan kopup bazen projeye React veya Tailwind gibi başta istenmeyen karmaşık teknolojileri dahil etmeye çalışmasıydı. Ajanı doğru sınırlarda tutmak ve basit/Vanilla yaklaşımda kalması için prompt'ları (istemleri) çok net ve kısıtlayıcı vermek gerekti.
+## 3. Vibe Coding (Yapay Zeka ile Kodlama) Deneyimi
+Bu yapay zekayla kod yazma işi gerçekten çok ilginçti. Tasarım yaparken "şuranın rengini toz pembe yap, kenarları yuvarlat" diyerek saatlerce CSS yazmaktan kurtuldum, bana çok zaman kazandırdı. Ama en çok zorlandığım yer, yapay zekanın beni bazen yanlış anlamasıydı. Ben basit bir sayfa istiyorum, o gidip çok karmaşık ve henüz öğrenmediğim kodlar (React vb.) yazmaya çalışıyordu. Sürekli onu durdurup "sadece basit HTML/CSS yaz" diye uyarmak biraz yorucuydu.
 
-## 4. Antigravity'de En Faydalı Bulunan 2 Özellik
-1. **Otonom Terminal ve Dosya Yönetimi:** Antigravity'nin projeye ait klasörleri kendi okuyup, kodları dosyaya direkt yazması ve terminalde (cmd) Python komutlarını çalıştırarak hataları canlı canlı test edebilmesi kopyala-yapıştır yükünü tamamen bitirdi.
-2. **Artifact (Eser) ve Planlama Sistemi:** Mimari kararlar alınırken uygulamanın "Plan" moduna geçip Markdown dosyalarında (Artifacts) adım adım stratejiyi kullanıcıya sunması ve onay almadan kod yazmaması, projenin kontrolden çıkmasını engelledi.
+## 4. Antigravity'de En Faydalı Bulduğum 2 Özellik
+1. **Dosyaları kendi kendine düzenlemesi:** Kodları tek tek kopyalayıp doğru yere yapıştırmak çok sıkıcı bir iş. Bu aracın direkt dosyalarımı açıp kodları içine kaydetmesi çok işime yaradı.
+2. **Hataları kendi görüp çözmesi:** Projeyi terminalde kendi çalıştırdı. Bazen benim ekranda görüp "bu hata ne anlama geliyor" diyeceğim şeyleri benden önce görüp düzeltti, bu da beni büyük dertlerden kurtardı.
 
-## 5. Ajanın Yakalayıp Düzeltilen En Kritik 3 Hatası
-1. **Windows Terminal Unicode (Emoji) Hatası:** Backend başlatılırken loglara basılan emoji karakterlerinin Windows CMD'de `UnicodeEncodeError` verip Flask'ı çökertmesi. Sistemin standart çıkışını UTF-8'e zorlayan (`sys.stdout = io.TextIOWrapper...`) bir yama ile aşıldı.
-2. **Frontend Klasör Yolları (404 Hatası):** Ajanın CSS ve JS dosya yollarını kök dizinden (`/css/main.css`) verecek şekilde yazması nedeniyle VS Code Live Server'da dosyaların bulunamaması. Yollar bağıl (relative) formatta (`css/main.css`) düzeltildi.
-3. **Payload Too Large (API Timeout):** Kullanıcının yüklediği orijinal boyuttaki yüksek çözünürlüklü fotoğrafların doğrudan Gemini API'ye gönderildiğinde boyut aşımı (veya süre aşımı) hatasına sebep olması. Ön tarafta veya backend okumasında fotoğrafların optimize edilerek gönderilmesi sağlandı.
+## 5. Ajanın Yakalayıp Benim Düzelttiğim 3 Kritik Hata
+1. **Emoji Hatası (Unicode):** Windows terminali `print()` ile pembe çiçek emojisi yazdırırken çöktü. Yapay zeka bana Python'un dil kodlamasını UTF-8 yapacak bir ayar verdi, o kodu ekleyince sorun çözüldü.
+2. **Yanlış Klasör Yolları:** CSS ve JS dosyalarını `index.html` içine çekerken yolları hep `/css/main.css` diye başına eğik çizgi koyarak yazmıştı. Bu yüzden Live Server'da sitemin tasarımı yüklenmiyordu (404 hatası). O eğik çizgileri silip bağıl yol yaparak ben düzelttim.
+3. **Büyük Fotoğraf Yükleme Sorunu:** Telefondan çekilen büyük fotoğrafları yükleyince Google Gemini API "Dosya çok büyük (Payload Too Large)" diyerek çöktü. Bunu aşmak için resmi backend'e göndermeden önce kalitesini ve boyutunu düşürecek bir kod eklememiz gerekti.
 
-## 6. AI Olmadan Sıfırdan Yapılsaydı Tahmini Süre
-Tam teşekküllü bir Flask uygulaması kurmak, JWT tabanlı Auth (ve e-posta OTP) sistemini yazmak, modern ve responsive bir CSS tasarım sistemi oluşturup Chart.js ile veri bağlamak, web scraping altyapısı kurmak ve Google API entegrasyonlarını hatasız yapmak AI desteği olmadan **en az 3-4 haftalık** (günde 4-5 saatlik) yoğun bir kodlama süreci gerektirirdi. Antigravity sayesinde bu süreç günler seviyesine indi.
+## 6. Projeyi Sıfırdan AI Olmadan Yapsaydım Ne Kadar Sürerdi?
+Açıkçası Flask'ı ve veritabanı bağlamayı yeni öğreniyorum. Böyle kullanıcı girişli, şifre sıfırlamalı, veritabanlı, API bağlantılı ve düzgün tasarımlı bir projeyi tek başıma AI olmadan yapmaya kalksaydım herhalde en az 3-4 haftamı alırdı, bazı kısımlarda tıkanıp pes bile edebilirdim. Yapay zeka sayesinde birkaç gün içinde temelini atıp üstüne çalışır bir sistem kurabildim.
 
-## 7. Projeyi Sürdürmek İstenirse Bir Sonraki Adım
-Projeyi ileriye taşımak için bir sonraki adım, hava durumu (UV indeksi, nem oranı) API'lerini sisteme entegre etmek olurdu. Bu sayede kullanıcının bulunduğu lokasyon tespit edilerek, "Bugün UV çok yüksek, 50 SPF Güneş kremini unutma" şeklinde dinamik ve anlık bildirimler/öneriler sunan bir sistem geliştirilirdi. Ek olarak, ürün barkodu okutarak doğrudan içeriğine (Ingredient Check) ulaşma özelliği mobil uyumluluğu çok artırırdı.
+## 7. Bu Projeyi Sürdürürsem Bir Sonraki Adım Ne Olur?
+Şu anki hali benim için yeterli ama devam etseydim hava durumu API'si bağlardım. Mesela "Bugün UV indeksi çok yüksek, güneş kremini mutlaka sür" gibi bildirimler çıkartırdım. Bir de kullanıcıların kamerayla ürünün barkodunu okutup doğrudan içindekiler kısmını analiz ettirebileceği bir özellik eklerdim, mobilde çok havalı olurdu.
