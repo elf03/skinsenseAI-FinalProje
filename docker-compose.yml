@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: skinsense_backend
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - PORT=5000
+    volumes:
+      - ./backend:/app
+      - /app/instance # SQLite veritabanının Docker içinde kalması için
+
+  # Arayüzü (Frontend) sunmak için NGINX Web Sunucusu (Çok havalı görünür)
+  frontend:
+    image: nginx:alpine
+    container_name: skinsense_frontend
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
