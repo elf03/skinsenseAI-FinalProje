@@ -288,7 +288,13 @@ function initNavbar() {
   if (user) {
     const avatarBtnEl = document.querySelector('.avatar-btn');
     if (avatarBtnEl) {
-      avatarBtnEl.textContent = user.name?.charAt(0).toUpperCase() || '?';
+      if (user.avatar) {
+        avatarBtnEl.innerHTML = `<img src="http://localhost:5000${user.avatar}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        avatarBtnEl.style.padding = '0';
+        avatarBtnEl.style.overflow = 'hidden';
+      } else {
+        avatarBtnEl.textContent = user.name?.charAt(0).toUpperCase() || '?';
+      }
     }
     document.querySelectorAll('.user-name').forEach(el => el.textContent = user.name);
   }
