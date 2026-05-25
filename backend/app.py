@@ -2,7 +2,7 @@ import sys
 import io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_wtf.csrf import CSRFProtect, generate_csrf
@@ -84,6 +84,10 @@ def create_app():
     @app.route('/health')
     def health():
         return {'status': 'healthy', 'db': 'connected'}
+
+    @app.route('/uploads/<path:filename>')
+    def serve_uploads(filename):
+        return send_from_directory('uploads', filename)
 
     @app.errorhandler(404)
     def not_found(e):

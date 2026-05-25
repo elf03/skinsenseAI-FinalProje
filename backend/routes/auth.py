@@ -7,7 +7,13 @@ import string
 from datetime import datetime, timedelta
 from services.email_service import send_otp_email
 
+import os
+import time
+
 auth_bp = Blueprint('auth', __name__)
+
+UPLOAD_AVATAR_FOLDER = 'uploads/avatars'
+os.makedirs(UPLOAD_AVATAR_FOLDER, exist_ok=True)
 
 
 @auth_bp.route('/register', methods=['POST'])
@@ -146,5 +152,34 @@ def update_profile():
     if 'preferred_language' in data:
         user.preferred_language = data['preferred_language']
     
+    
     db.session.commit()
     return jsonify({'user': user.to_dict()}), 200
+
+@auth_bp.route('/upload-avatar', methods=['POST'])
+@jwt_required()
+def upload_avatar():
+    user_id = int(get_jwt_identity())
+    
+    if 'avatar' not in request.files:
+        return jsonify({'error': 'Fotoğraf yüklenmedi.'}), 400
+        
+    file = request.files['avatar']
+    if file.filename == '':
+        return jsonify({'error': 'Dosya seçilmedi.'}), 400
+        
+    if file:
+        ext = file.filename.split('.')[-1].lower()
+        if ext not in ['jpg', 'jpeg', 'png', 'webp']:
+            return jsonify({'error': 'Sadece resim formatları desteklenir.'}), 400
+            
+        filename = f"avatar_{user_id}_{int(time.time())}.{ext}"
+        filepath = os.path.join(UPLOAD_AVATAR_FOLDER, filename)
+        file.save(filepath)
+        
+        user = User.query.get(user_id)
+        # /uploads/avatars/<filename> URL path
+        user.avatar = f"/uploads/avatars/{filename}"
+        db.session.commit()
+        
+        return jsonify({'message': 'Avatar başarıyla güncellendi.', 'avatar_url': user.avatar, 'user': user.to_dict()}), 200

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkinSense AI — Profilim</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    /* Profil Sayfası Özel Stiller */
+    .profile-container {
+      max-width: 600px;
+      margin: 120px auto 60px;
+      padding: 0 20px;
+    }
+    
+    .profile-card {
+      background: var(--surface);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      border: 1px solid rgba(155, 114, 207, 0.1);
+    }
+    
+    .profile-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    
+    .avatar-wrapper {
+      position: relative;
+      margin-bottom: 20px;
+    }
+    
+    .profile-avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid var(--primary-light);
+      background: var(--bg-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      color: var(--primary-dark);
+      overflow: hidden;
+    }
+
+    .profile-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .avatar-upload-btn {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      background: var(--primary-dark);
+      color: white;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: 2px solid var(--surface);
+      transition: transform 0.2s ease;
+    }
+    
+    .avatar-upload-btn:hover {
+      transform: scale(1.1);
+    }
+    
+    .avatar-upload-btn input {
+      display: none;
+    }
+
+    .profile-name {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin-bottom: 5px;
+    }
+    
+    .profile-email {
+      color: var(--text-light);
+      font-size: 0.95rem;
+    }
+    
+    .form-row {
+      margin-bottom: 20px;
+    }
+    
+    .form-actions {
+      margin-top: 30px;
+      display: flex;
+      justify-content: flex-end;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo">✨ SkinSense<span style="color:var(--primary-dark)">AI</span></a>
+      <div class="nav-links">
+        <a href="dashboard.html" class="nav-link auth-only" data-i18n="nav.dashboard">Panelim</a>
+        <a href="analysis.html" class="nav-link auth-only" data-i18n="nav.analysis">Cilt Analizi</a>
+        <a href="history.html" class="nav-link auth-only" data-i18n="nav.history">Geçmiş</a>
+        
+        <div class="user-menu auth-only">
+          <div class="avatar-btn">?</div>
+          <div class="avatar-dropdown">
+            <div class="dropdown-header">
+              <span class="user-name">Kullanıcı</span>
+            </div>
+            <a href="profile.html" class="dropdown-item">👤 Profilim</a>
+            <div class="dropdown-divider"></div>
+            <a href="#" class="dropdown-item text-danger" onclick="Auth.logout()">🚪 Çıkış Yap</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="profile-container">
+    <div class="profile-card">
+      
+      <div class="profile-header">
+        <div class="avatar-wrapper">
+          <div class="profile-avatar" id="avatarDisplay">
+            <!-- Resim veya baş harf buraya gelecek -->
+          </div>
+          <label class="avatar-upload-btn" title="Fotoğraf Değiştir">
+            📷
+            <input type="file" id="avatarInput" accept="image/png, image/jpeg, image/jpg, image/webp" onchange="handleAvatarChange(event)">
+          </label>
+        </div>
+        <h2 class="profile-name" id="display-name">Kullanıcı Adı</h2>
+        <p class="profile-email" id="display-email">email@ornek.com</p>
+      </div>
+
+      <form id="profileForm" class="form-stack" onsubmit="handleProfileUpdate(event)">
+        <!-- CSRF Token (Güvenlik için) -->
+        <input type="hidden" name="csrf_token" class="csrf-input" value="">
+
+        <div class="form-row">
+          <label class="form-label">👤 Ad Soyad</label>
+          <div class="input-wrapper">
+            <input type="text" id="nameInput" class="form-input" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">🌍 Dil Tercihi</label>
+          <div class="input-wrapper">
+            <select id="langInput" class="form-input">
+              <option value="tr">Türkçe</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <label class="form-label">🧬 Cilt Tipiniz (Otomatik belirlenir)</label>
+          <div class="input-wrapper">
+            <input type="text" id="skinTypeInput" class="form-input" disabled placeholder="Henüz analiz yapılmadı">
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="saveBtn">💾 Kaydet</button>
+        </div>
+      </form>
+      
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script>
+    // Kullanıcı kontrolü
+    if (!Auth.isLoggedIn()) {
+      window.location.href = 'auth.html';
+    }
+
+    // Sayfa yüklendiğinde mevcut bilgileri doldur
+    async function loadProfile() {
+      try {
+        const data = await AuthAPI.me();
+        const user = data.user;
+        
+        document.getElementById('display-name').textContent = user.name;
+        document.getElementById('display-email').textContent = user.email;
+        
+        document.getElementById('nameInput').value = user.name;
+        document.getElementById('langInput').value = user.preferred_language || 'tr';
+        if (user.skin_type) {
+          document.getElementById('skinTypeInput').value = user.skin_type;
+        }
+
+        // Avatar gösterimi
+        const avatarDisplay = document.getElementById('avatarDisplay');
+        if (user.avatar) {
+          avatarDisplay.innerHTML = `<img src="http://localhost:5000${user.avatar}" alt="Avatar">`;
+        } else {
+          avatarDisplay.textContent = user.name.charAt(0).toUpperCase();
+        }
+
+        Auth.setUser(user); // LocalStorage güncelle
+        initNavbar(); // Navbar avatarını güncelle
+      } catch (err) {
+        showToast('Profil bilgileri alınamadı.', 'error');
+      }
+    }
+
+    // Avatar yükleme işlemi
+    async function handleAvatarChange(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('Dosya boyutu 5MB altında olmalıdır.', 'error');
+        return;
+      }
+
+      // Geçici önizleme
+      const avatarDisplay = document.getElementById('avatarDisplay');
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        avatarDisplay.innerHTML = `<img src="${e.target.result}" style="opacity: 0.5">`;
+      };
+      reader.readAsDataURL(file);
+
+      try {
+        showToast('Fotoğraf yükleniyor...', 'info');
+        const res = await AuthAPI.uploadAvatar(file);
+        showToast(res.message, 'success');
+        
+        // Gerçek fotoğrafı göster
+        avatarDisplay.innerHTML = `<img src="http://localhost:5000${res.avatar_url}" alt="Avatar">`;
+        initNavbar();
+      } catch (err) {
+        showToast(err.message || 'Yükleme başarısız.', 'error');
+        loadProfile(); // Hata varsa eski haline dön
+      }
+    }
+
+    // Profil güncelleme (İsim, Dil)
+    async function handleProfileUpdate(event) {
+      event.preventDefault();
+      
+      const name = document.getElementById('nameInput').value.trim();
+      const lang = document.getElementById('langInput').value;
+      const saveBtn = document.getElementById('saveBtn');
+
+      if (!name) return;
+
+      try {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Kaydediliyor...';
+
+        const res = await AuthAPI.updateProfile({ name, preferred_language: lang });
+        showToast('Profil başarıyla güncellendi.', 'success');
+        
+        document.getElementById('display-name').textContent = res.user.name;
+        i18n.setLang(lang); // Dili anında değiştir
+        initNavbar();
+      } catch (err) {
+        showToast(err.message || 'Güncelleme başarısız.', 'error');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = '💾 Kaydet';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadProfile);
+  </script>
+</body>
+</html>

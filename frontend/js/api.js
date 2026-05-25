@@ -71,6 +71,24 @@ const AuthAPI = {
   verifyOTP: (email, otp) => apiRequest('/auth/verify-otp', { method: 'POST', body: JSON.stringify({ email, otp }) }),
   me: () => apiRequest('/auth/me'),
   updateProfile: (data) => apiRequest('/auth/update-profile', { method: 'PUT', body: JSON.stringify(data) }),
+  uploadAvatar: async (file) => {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    const token = Auth.getToken();
+    const headers = {
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      ...(globalCsrfToken ? { 'X-CSRFToken': globalCsrfToken } : {})
+    };
+    const res = await fetch(`${API_BASE}/auth/upload-avatar`, {
+      method: 'POST',
+      headers: headers,
+      body: formData
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || data.error_en || 'Avatar yüklenemedi.');
+    if (data.user) Auth.setUser(data.user);
+    return data;
+  }
 };
 // ── Analysis API ─────────────────────────────
 const AnalysisAPI = {
