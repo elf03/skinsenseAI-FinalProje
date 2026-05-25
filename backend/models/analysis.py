@@ -1,3 +1,5 @@
+from typing import Optional
+from sqlalchemy.orm import Mapped, mapped_column
 from .user import db
 from datetime import datetime
 import json
@@ -5,32 +7,32 @@ import json
 class Analysis(db.Model):
     __tablename__ = 'analyses'
     
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(db.ForeignKey('users.id'), nullable=False)
     
-    analysis_type = db.Column(db.String(20), nullable=False)  # 'photo' or 'questionnaire'
-    photo_path = db.Column(db.String(255), nullable=True)
+    analysis_type: Mapped[str] = mapped_column(db.String(20), nullable=False)  # 'photo' or 'questionnaire'
+    photo_path: Mapped[Optional[str]] = mapped_column(db.String(255), nullable=True)
     
-    skin_type = db.Column(db.String(50), nullable=True)
-    moisture_level = db.Column(db.Integer, nullable=True)
-    acne_level = db.Column(db.String(20), nullable=True)
-    sensitivity = db.Column(db.String(20), nullable=True)
-    blackheads = db.Column(db.String(20), nullable=True)
-    pores = db.Column(db.String(20), nullable=True)
-    oiliness = db.Column(db.String(20), nullable=True)
-    redness = db.Column(db.String(20), nullable=True)
-    dark_spots = db.Column(db.String(20), nullable=True)
-    dark_circles = db.Column(db.String(20), nullable=True)
-    tone_evenness = db.Column(db.String(20), nullable=True)
+    skin_type: Mapped[Optional[str]] = mapped_column(db.String(50), nullable=True)
+    moisture_level: Mapped[Optional[int]] = mapped_column(db.Integer, nullable=True)
+    acne_level: Mapped[Optional[str]] = mapped_column(db.String(20), nullable=True)
+    sensitivity: Mapped[Optional[str]] = mapped_column(db.String(20), nullable=True)
+    blackheads: Mapped[Optional[str]] = mapped_column(db.String(20), nullable=True)
+    pores: Mapped[Optional[str]] = mapped_column(db.String(20), nullable=True)
+    oiliness: Mapped[Optional[str]] = mapped_column(db.String(20), nullable=True)
+    redness: Mapped[Optional[str]] = mapped_column(db.String(20), nullable=True)
+    dark_spots: Mapped[Optional[str]] = mapped_column(db.String(20), nullable=True)
+    dark_circles: Mapped[Optional[str]] = mapped_column(db.String(20), nullable=True)
+    tone_evenness: Mapped[Optional[str]] = mapped_column(db.String(20), nullable=True)
     
-    ai_comments = db.Column(db.Text, nullable=True)
-    recommended_ingredients = db.Column(db.Text, nullable=True)
-    morning_routine = db.Column(db.Text, nullable=True)
-    evening_routine = db.Column(db.Text, nullable=True)
+    ai_comments: Mapped[Optional[str]] = mapped_column(db.Text, nullable=True)
+    recommended_ingredients: Mapped[Optional[str]] = mapped_column(db.Text, nullable=True)
+    morning_routine: Mapped[Optional[str]] = mapped_column(db.Text, nullable=True)
+    evening_routine: Mapped[Optional[str]] = mapped_column(db.Text, nullable=True)
     
-    raw_response = db.Column(db.Text, nullable=True)
+    raw_response: Mapped[Optional[str]] = mapped_column(db.Text, nullable=True)
     
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(db.DateTime, default=datetime.utcnow)
     
     def to_dict(self):
         return {
@@ -60,19 +62,19 @@ class Analysis(db.Model):
 class Product(db.Model):
     __tablename__ = 'products'
     
-    id = db.Column(db.Integer, primary_key=True)
-    brand = db.Column(db.String(100), nullable=False)
-    name = db.Column(db.String(255), nullable=False)
-    category = db.Column(db.String(100), nullable=True)  # cleanser, serum, moisturizer, sunscreen
-    description = db.Column(db.Text, nullable=True)
-    price = db.Column(db.String(50), nullable=True)
-    image_url = db.Column(db.String(500), nullable=True)
-    product_url = db.Column(db.String(500), nullable=True)
-    ingredients = db.Column(db.Text, nullable=True)
-    skin_types = db.Column(db.String(255), nullable=True)  # comma-separated
-    concerns = db.Column(db.String(255), nullable=True)    # comma-separated
+    id: Mapped[int] = mapped_column(primary_key=True)
+    brand: Mapped[str] = mapped_column(db.String(100), nullable=False)
+    name: Mapped[str] = mapped_column(db.String(255), nullable=False)
+    category: Mapped[Optional[str]] = mapped_column(db.String(100), nullable=True)  # cleanser, serum, moisturizer, sunscreen
+    description: Mapped[Optional[str]] = mapped_column(db.Text, nullable=True)
+    price: Mapped[Optional[str]] = mapped_column(db.String(50), nullable=True)
+    image_url: Mapped[Optional[str]] = mapped_column(db.String(500), nullable=True)
+    product_url: Mapped[Optional[str]] = mapped_column(db.String(500), nullable=True)
+    ingredients: Mapped[Optional[str]] = mapped_column(db.Text, nullable=True)
+    skin_types: Mapped[Optional[str]] = mapped_column(db.String(255), nullable=True)  # comma-separated
+    concerns: Mapped[Optional[str]] = mapped_column(db.String(255), nullable=True)    # comma-separated
     
-    scraped_at = db.Column(db.DateTime, default=datetime.utcnow)
+    scraped_at: Mapped[datetime] = mapped_column(db.DateTime, default=datetime.utcnow)
     
     def to_dict(self):
         return {
