@@ -572,19 +572,17 @@
       </div>
 
       <!-- Auth nav -->
-      <div class="auth-only avatar-menu" style="display:none">
-        <button class="avatar-btn" title="Hesabım">?</button>
+      <div class="user-menu auth-only">
+        <div class="avatar-btn">?</div>
         <div class="avatar-dropdown">
-          <div class="dropdown-item" onclick="window.location.href='dashboard.html'">
-            <span>📊</span> <span>Panelim</span>
+          <div class="dropdown-header">
+            <span class="user-name">Kullanıcı</span>
           </div>
-          <div class="dropdown-item" onclick="window.location.href='history.html'">
-            <span>📅</span> <span>Geçmiş</span>
-          </div>
+          <a href="dashboard.html" class="dropdown-item">📊 Panelim</a>
+          <a href="profile.html" class="dropdown-item">👤 Profilim</a>
+          <a href="history.html" class="dropdown-item">📅 Geçmiş</a>
           <div class="dropdown-divider"></div>
-          <div class="dropdown-item danger" onclick="Auth.logout()">
-            <span>🚪</span> <span>Çıkış Yap</span>
-          </div>
+          <a href="#" class="dropdown-item text-danger" onclick="Auth.logout()">🚪 Çıkış Yap</a>
         </div>
       </div>
     </div>

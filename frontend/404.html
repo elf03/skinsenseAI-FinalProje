@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>404 — Sayfa Bulunamadı | SkinSense AI</title>
+  <meta name="description" content="Aradığınız sayfa bulunamadı." />
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Arka plan orbs */
+    .bg-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(70px);
+      opacity: 0.4;
+      pointer-events: none;
+    }
+    .orb-1 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, #F4C2C6, #E8B4B8);
+      top: -150px; right: -150px;
+      animation: float 7s ease-in-out infinite;
+    }
+    .orb-2 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, #C89FC5, #9B72CF);
+      bottom: -100px; left: -100px;
+      animation: float 9s ease-in-out 2s infinite;
+    }
+    .orb-3 {
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, #FBB6C8, #D0AAFF);
+      top: 50%; left: 50%;
+      animation: float 6s ease-in-out 1s infinite;
+    }
+
+    /* 404 Kart */
+    .error-card {
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      border-radius: 36px;
+      backdrop-filter: blur(20px);
+      padding: 64px 56px;
+      text-align: center;
+      max-width: 520px;
+      width: 90%;
+      position: relative;
+      z-index: 1;
+      box-shadow: 0 20px 60px rgba(155, 114, 207, 0.15);
+      animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    /* Büyük 404 */
+    .error-number {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(6rem, 15vw, 9rem);
+      font-weight: 900;
+      line-height: 1;
+      background: linear-gradient(135deg, #E8B4B8 0%, #C89FC5 50%, #9B72CF 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+      letter-spacing: -4px;
+      animation: gradientShift 4s ease infinite;
+      background-size: 200% 200%;
+    }
+
+    /* Emoji */
+    .error-emoji {
+      font-size: 4rem;
+      display: block;
+      margin-bottom: 16px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .error-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.625rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+    }
+
+    .error-desc {
+      font-size: 0.9375rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 36px;
+      max-width: 340px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* Linkler */
+    .error-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 32px;
+    }
+
+    /* Hızlı linkler */
+    .quick-links {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .quick-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: var(--beige-200);
+      border-radius: var(--radius-full);
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      transition: all var(--transition-bounce);
+    }
+
+    .quick-link:hover {
+      background: var(--purple-50);
+      color: var(--purple-600);
+      transform: translateY(-2px);
+    }
+
+    /* Geri sayım */
+    .redirect-note {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-top: 20px;
+    }
+
+    .redirect-count {
+      font-weight: 700;
+      color: var(--purple-500);
+    }
+
+    /* Logo */
+    .error-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.125rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 32px;
+    }
+
+    .error-logo-icon {
+      width: 34px;
+      height: 34px;
+      background: var(--grad-pink-purple);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      box-shadow: 0 4px 12px rgba(155,114,207,0.3);
+    }
+  </style>
+</head>
+<body>
+  <!-- Arka plan orbs -->
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="bg-orb orb-3"></div>
+
+  <!-- 404 Kart -->
+  <div class="error-card">
+
+    <!-- Logo -->
+    <a href="index.html" class="error-logo">
+      <div class="error-logo-icon">🌸</div>
+      SkinSense AI
+    </a>
+
+    <!-- Emoji -->
+    <span class="error-emoji">🔍</span>
+
+    <!-- 404 -->
+    <div class="error-number">404</div>
+
+    <!-- Başlık -->
+    <h1 class="error-title">Sayfa Bulunamadı</h1>
+
+    <!-- Açıklama -->
+    <p class="error-desc">
+      Aradığınız sayfa mevcut değil ya da taşınmış olabilir.
+      Belki cilt analizine geçme zamanıdır? 🌸
+    </p>
+
+    <!-- Aksiyonlar -->
+    <div class="error-actions">
+      <a href="index.html" class="btn btn-primary">
+        🏠 Ana Sayfaya Dön
+      </a>
+      <a href="analysis.html" class="btn btn-secondary">
+        🔬 Analiz Yap
+      </a>
+    </div>
+
+    <!-- Hızlı Linkler -->
+    <div class="quick-links">
+      <a href="auth.html" class="quick-link">👤 Giriş Yap</a>
+      <a href="dashboard.html" class="quick-link">📊 Panel</a>
+      <a href="ingredient-check.html" class="quick-link">🧪 İçerik Kontrolü</a>
+      <a href="history.html" class="quick-link">📅 Geçmiş</a>
+    </div>
+
+    <!-- Geri sayım -->
+    <p class="redirect-note">
+      <span class="redirect-count" id="countdown">10</span> saniye içinde ana sayfaya yönlendirileceksiniz
+    </p>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    // Geri sayım ve otomatik yönlendirme
+    let count = 10;
+    const countEl = document.getElementById('countdown');
+
+    const timer = setInterval(() => {
+      count--;
+      countEl.textContent = count;
+      if (count <= 0) {
+        clearInterval(timer);
+        window.location.href = 'index.html';
+      }
+    }, 1000);
+
+    // Dil sistemi
+    document.addEventListener('DOMContentLoaded', () => {
+      i18n.init();
+    });
+  </script>
+</body>
+</html>
