@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cilt Analizi — SkinSense AI</title>
+  <meta name="description" content="Fotoğraf yükleyin veya sorulara yanıt vererek AI destekli cilt analizi yaptırın." />
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    .analysis-page { padding: 100px 0 80px; min-height: 100vh; }
+
+    /* Mode Seçici */
+    .mode-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      max-width: 640px;
+      margin: 0 auto 48px;
+    }
+
+    .mode-card {
+      background: var(--glass-bg-strong);
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 32px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transition-bounce);
+    }
+
+    .mode-card:hover {
+      border-color: var(--purple-400);
+      box-shadow: var(--shadow-purple);
+      transform: translateY(-4px);
+    }
+
+    .mode-card.selected {
+      border-color: var(--purple-500);
+      background: var(--purple-50);
+      box-shadow: var(--shadow-purple);
+    }
+
+    .mode-icon {
+      font-size: 3rem;
+      margin-bottom: 14px;
+      display: block;
+    }
+
+    .mode-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .mode-desc { font-size: 0.8125rem; color: var(--text-muted); }
+
+    /* Upload Area */
+    .upload-area {
+      border: 2px dashed var(--border-strong);
+      border-radius: var(--radius-xl);
+      padding: 60px 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transition-base);
+      background: var(--glass-bg-strong);
+      position: relative;
+    }
+
+    .upload-area:hover, .upload-area.drag-over {
+      border-color: var(--purple-500);
+      background: var(--purple-50);
+    }
+
+    .upload-area input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .upload-icon {
+      font-size: 3.5rem;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .upload-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .upload-desc { font-size: 0.875rem; color: var(--text-muted); }
+
+    /* Preview */
+    .photo-preview {
+      position: relative;
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      display: none;
+    }
+
+    .photo-preview img {
+      width: 100%;
+      height: 360px;
+      object-fit: cover;
+      border-radius: var(--radius-xl);
+    }
+
+    .preview-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(61,45,69,0.5), transparent);
+      border-radius: var(--radius-xl);
+    }
+
+    .preview-actions {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      gap: 12px;
+    }
+
+    /* Camera */
+    .camera-view {
+      position: relative;
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      display: none;
+    }
+
+    .camera-view video {
+      width: 100%;
+      height: 360px;
+      object-fit: cover;
+      border-radius: var(--radius-xl);
+      transform: scaleX(-1); /* selfie mirror */
+    }
+
+    .camera-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 24px;
+    }
+
+    .camera-guide {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -55%);
+      width: 200px;
+      height: 250px;
+      border: 2.5px solid rgba(255,255,255,0.7);
+      border-radius: 50% 50% 45% 45%;
+      box-shadow: 0 0 0 1000px rgba(61,45,69,0.3);
+    }
+
+    .capture-btn {
+      width: 70px;
+      height: 70px;
+      background: white;
+      border-radius: 50%;
+      border: 4px solid rgba(255,255,255,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+      cursor: pointer;
+      transition: all var(--transition-bounce);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .capture-btn:hover { transform: scale(1.1); }
+    .capture-btn:active { transform: scale(0.95); }
+
+    /* Questionnaire */
+    .questionnaire-wrap {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .question-progress {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 32px;
+    }
+
+    .q-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--beige-300);
+      transition: all var(--transition-bounce);
+    }
+
+    .q-dot.active {
+      background: var(--purple-500);
+      transform: scale(1.4);
+    }
+
+    .q-dot.done { background: var(--pink-400); }
+
+    .question-card {
+      background: var(--glass-bg-strong);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      padding: 40px;
+      animation: slideUp 0.4s ease both;
+    }
+
+    .question-num {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--purple-500);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .question-text {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.3125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 28px;
+      line-height: 1.35;
+    }
+
+    .options-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .option-btn {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 20px;
+      background: white;
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all var(--transition-bounce);
+      text-align: left;
+    }
+
+    .option-btn:hover {
+      border-color: var(--purple-400);
+      background: var(--purple-50);
+      transform: translateX(4px);
+    }
+
+    .option-btn.selected {
+      border-color: var(--purple-500);
+      background: var(--purple-50);
+      box-shadow: 0 0 0 3px rgba(155,114,207,0.15);
+    }
+
+    .option-icon { font-size: 1.25rem; flex-shrink: 0; }
+
+    .option-text {
+      flex: 1;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .option-check {
+      width: 22px;
+      height: 22px;
+      border: 2px solid var(--border-color);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      color: transparent;
+      transition: all var(--transition-bounce);
+      flex-shrink: 0;
+    }
+
+    .option-btn.selected .option-check {
+      background: var(--purple-500);
+      border-color: var(--purple-500);
+      color: white;
+    }
+
+    .q-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 28px;
+    }
+
+    /* AI Loader */
+    .ai-analyzing-screen {
+      display: none;
+      text-align: center;
+      padding: 80px 40px;
+    }
+
+    .ai-analyzing-screen.show { display: block; }
+
+    .ai-pulse-ring {
+      width: 120px;
+      height: 120px;
+      background: var(--grad-pink-purple);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      margin: 0 auto 28px;
+      animation: aiPulse 2s ease-in-out infinite;
+      box-shadow: 0 0 0 0 rgba(155,114,207,0.4);
+    }
+
+    .ai-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 360px;
+      margin: 0 auto;
+    }
+
+    .ai-step-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: var(--glass-bg-strong);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      opacity: 0;
+      animation: slideUp 0.4s ease both;
+    }
+
+    .ai-step-spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--beige-300);
+      border-top-color: var(--purple-500);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 640px) {
+      .mode-selector { grid-template-columns: 1fr; }
+      .question-card { padding: 28px 20px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a href="index.html" class="nav-logo">
+      <div class="nav-logo-icon">🌸</div>
+      SkinSense AI
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" class="nav-link">Ana Sayfa</a></li>
+      <li><a href="analysis.html" class="nav-link active">Cilt Analizi</a></li>
+      <li><a href="ingredient-check.html" class="nav-link">İçerik Kontrolü</a></li>
+      <li class="auth-only"><a href="dashboard.html" class="nav-link">Panelim</a></li>
+    </ul>
+    <div class="nav-actions">
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="tr">TR</button>
+        <button class="lang-btn" data-lang="en">EN</button>
+      </div>
+      <div class="guest-only flex gap-2">
+        <a href="auth.html" class="btn btn-secondary btn-sm">Giriş Yap</a>
+      </div>
+      <div class="avatar-menu">
+        <button class="avatar-btn" id="avatarBtn">?</button>
+        <div class="avatar-dropdown">
+          <div class="dropdown-item" onclick="window.location.href='dashboard.html'"><span>📊</span> Panelim</div>
+          <div class="dropdown-item" onclick="window.location.href='profile.html'"><span>👤</span> Profilim</div>
+          <div class="dropdown-item" onclick="window.location.href='history.html'"><span>📅</span> Geçmiş</div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-item danger" onclick="Auth.logout()"><span>🚪</span> Çıkış</div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="analysis-page">
+    <div class="container">
+      <!-- Başlık -->
+      <div style="text-align:center;margin-bottom:40px;" class="stagger-1">
+        <div class="section-badge">🔬 AI Analiz</div>
+        <h1 class="heading-1" style="margin-bottom:12px;">Cilt Analizinizi <span class="gradient-text">Başlatın</span></h1>
+        <p class="body-md" style="color:var(--text-muted);">Fotoğraf yükleyin veya anket doldurun — AI cildinizi analiz etsin</p>
+      </div>
+
+      <!-- Ana İçerik Alanı -->
+      <div id="mainContent">
+        <!-- Mod Seçici -->
+        <div class="mode-selector stagger-2">
+          <div class="mode-card selected" id="photoModeCard" onclick="selectMode('photo')">
+            <span class="mode-icon">📸</span>
+            <div class="mode-title">Fotoğraf ile</div>
+            <p class="mode-desc">Selfie yükleyin veya kamerayla çekin</p>
+          </div>
+          <div class="mode-card" id="quizModeCard" onclick="selectMode('quiz')">
+            <span class="mode-icon">🤖</span>
+            <div class="mode-title">Anket ile</div>
+            <p class="mode-desc">AI sorularını cevaplayarak analiz alın</p>
+          </div>
+        </div>
+
+        <!-- FOTOĞRAF MODU -->
+        <div id="photoMode" style="max-width:640px;margin:0 auto;" class="stagger-3">
+          <!-- Upload Area -->
+          <div class="upload-area" id="uploadArea" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+            <input type="file" accept="image/*" id="fileInput" onchange="handleFileSelect(event)" />
+            <span class="upload-icon">📸</span>
+            <div class="upload-title">Selfie Yükleyin</div>
+            <p class="upload-desc">Fotoğrafı buraya sürükleyip bırakın veya tıklayın<br>JPG, PNG, WEBP — Maks. 10MB</p>
+            <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+              <span class="chip chip-pink">📂 Dosya Seç</span>
+              <span class="chip chip-purple" style="cursor:pointer;" onclick="event.stopPropagation();startCamera()">📷 Kamera Kullan</span>
+            </div>
+          </div>
+
+          <!-- Kamera -->
+          <div class="camera-view" id="cameraView">
+            <video id="cameraVideo" autoplay playsinline></video>
+            <div class="camera-overlay">
+              <div class="camera-guide"></div>
+              <div style="display:flex;gap:16px;align-items:center;">
+                <button class="btn btn-secondary btn-sm" onclick="stopCamera()">❌ İptal</button>
+                <button class="capture-btn" onclick="capturePhoto()" id="captureBtn">📸</button>
+                <div style="width:80px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Önizleme -->
+          <div class="photo-preview" id="photoPreview">
+            <img id="previewImg" src="" alt="Önizleme" />
+            <div class="preview-overlay"></div>
+            <div class="preview-actions">
+              <button class="btn btn-secondary" onclick="resetPhoto()" style="flex:1;justify-content:center;">
+                🔄 Değiştir
+              </button>
+              <button class="btn btn-primary" onclick="startPhotoAnalysis()" style="flex:1;justify-content:center;">
+                🔬 Analiz Et
+              </button>
+            </div>
+          </div>
+
+          <!-- İpuçları -->
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:20px;" id="uploadTips">
+            <div class="chip chip-beige">💡 İyi aydınlatma</div>
+            <div class="chip chip-beige">😶 Makyajsız</div>
+            <div class="chip chip-beige">📐 Düz açı</div>
+            <div class="chip chip-beige">🌞 Doğal ışık</div>
+          </div>
+        </div>
+
+        <!-- ANKETi MODU -->
+        <div id="quizMode" style="display:none;">
+          <div class="questionnaire-wrap">
+            <!-- Progress dots -->
+            <div class="question-progress" id="questionProgress"></div>
+
+            <!-- Question Card -->
+            <div class="question-card" id="questionCard">
+              <!-- JS ile doldurulacak -->
+            </div>
+
+            <!-- Q Navigation -->
+            <div class="q-nav">
+              <button class="btn btn-ghost" id="prevBtn" onclick="prevQuestion()" style="display:none;">
+                ← Geri
+              </button>
+              <div></div>
+              <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">
+                İleri →
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Analiz Ekranı -->
+      <div class="ai-analyzing-screen" id="analyzingScreen">
+        <div class="ai-pulse-ring">🧬</div>
+        <h2 class="heading-2" style="margin-bottom:8px;">AI Cildinizi Analiz Ediyor</h2>
+        <p class="body-md" style="color:var(--text-muted);margin-bottom:32px;">Bu işlem 5–10 saniye sürebilir...</p>
+
+        <div class="ai-steps">
+          <div class="ai-step-item stagger-1">
+            <div class="ai-step-spinner"></div>
+            <span>Fotoğraf işleniyor...</span>
+          </div>
+          <div class="ai-step-item stagger-2">
+            <div class="ai-step-spinner"></div>
+            <span>Cilt sorunları tespit ediliyor...</span>
+          </div>
+          <div class="ai-step-item stagger-3">
+            <div class="ai-step-spinner"></div>
+            <span>Kişisel rutin oluşturuluyor...</span>
+          </div>
+          <div class="ai-step-item stagger-4">
+            <div class="ai-step-spinner"></div>
+            <span>Ürün önerileri hazırlanıyor...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    let currentMode = 'photo';
+    let currentQuestion = 0;
+    let answers = {};
+    let stream = null;
+
+    // ── Sorular ─────────────────────────────────
+    const questions = [
+      {
+        id: 'morning_skin',
+        text: 'Sabah uyandığınızda cildiniz nasıl görünüyor?',
+        icon: '🌅',
+        options: [
+          { icon: '✨', text: 'Pürüzsüz ve rahat', value: 'normal' },
+          { icon: '🫧', text: 'Yağlı ve parlak', value: 'oily' },
+          { icon: '🌵', text: 'Gergin ve kuru', value: 'dry' },
+          { icon: '🔀', text: 'T-bölgesi yağlı, yanaklar kuru', value: 'combination' },
+        ]
+      },
+      {
+        id: 'pore_visibility',
+        text: 'Gözeneklerinizi nasıl tanımlarsınız?',
+        icon: '🔍',
+        options: [
+          { icon: '🟤', text: 'Çok belirgin, büyük', value: 'large' },
+          { icon: '⚪', text: 'Orta büyüklükte', value: 'medium' },
+          { icon: '🔹', text: 'Küçük, neredeyse yok', value: 'small' },
+          { icon: '❓', text: 'Fark etmedim', value: 'unknown' },
+        ]
+      },
+      {
+        id: 'acne_frequency',
+        text: 'Ne sıklıkla sivilce/akne çıkıyor?',
+        icon: '🔴',
+        options: [
+          { icon: '❌', text: 'Hiç çıkmıyor', value: 'none' },
+          { icon: '📅', text: 'Zaman zaman (ayda 1-2)', value: 'occasional' },
+          { icon: '📈', text: 'Sık sık (haftada birkaç)', value: 'frequent' },
+          { icon: '🔥', text: 'Her zaman mevcut', value: 'constant' },
+        ]
+      },
+      {
+        id: 'skin_sensitivity',
+        text: 'Cildiniz yeni ürünlere nasıl tepki verir?',
+        icon: '🌡️',
+        options: [
+          { icon: '😊', text: 'Hiç sorun çıkarmaz', value: 'low' },
+          { icon: '😕', text: 'Bazen hafif kızarır', value: 'medium' },
+          { icon: '😣', text: 'Kolayca kızarır, yanar', value: 'high' },
+          { icon: '💊', text: 'Alerjim var', value: 'allergic' },
+        ]
+      },
+      {
+        id: 'main_concern',
+        text: 'En çok hangi cilt sorunuyla ilgileniyorsunuz?',
+        icon: '⭐',
+        options: [
+          { icon: '💧', text: 'Kuruluk / Nem eksikliği', value: 'dryness' },
+          { icon: '🫧', text: 'Yağlanma / Parlama', value: 'oiliness' },
+          { icon: '🔴', text: 'Akne / Sivilce', value: 'acne' },
+          { icon: '🟫', text: 'Leke / Ton eşitsizliği', value: 'spots' },
+          { icon: '⏰', text: 'Yaşlanma / Kırışıklık', value: 'aging' },
+          { icon: '🌸', text: 'Hassasiyet / Kızarıklık', value: 'sensitivity' },
+        ]
+      },
+      {
+        id: 'water_intake',
+        text: 'Günlük ne kadar su içiyorsunuz?',
+        icon: '💧',
+        options: [
+          { icon: '🚱', text: '1 litreden az', value: 'low' },
+          { icon: '💧', text: '1-2 litre', value: 'medium' },
+          { icon: '🌊', text: '2 litreden fazla', value: 'high' },
+        ]
+      },
+      {
+        id: 'sleep_hours',
+        text: 'Ortalama kaç saat uyuyorsunuz?',
+        icon: '😴',
+        options: [
+          { icon: '😵', text: '5 saatten az', value: 'poor' },
+          { icon: '😐', text: '5-7 saat', value: 'medium' },
+          { icon: '😊', text: '7-8 saat', value: 'good' },
+          { icon: '😴', text: '8 saatten fazla', value: 'great' },
+        ]
+      },
+      {
+        id: 'current_routine',
+        text: 'Şu an düzenli cilt bakımı yapıyor musunuz?',
+        icon: '🧴',
+        options: [
+          { icon: '❌', text: 'Hayır, hiç yapmıyorum', value: 'none' },
+          { icon: '🧼', text: 'Sadece yüz yıkıyorum', value: 'basic' },
+          { icon: '💊', text: 'Temizleyici + nemlendirici', value: 'moderate' },
+          { icon: '✨', text: 'Kapsamlı rutinim var', value: 'advanced' },
+        ]
+      },
+    ];
+
+    // ── Mod Seçimi ───────────────────────────────
+    function selectMode(mode) {
+      currentMode = mode;
+      document.getElementById('photoModeCard').classList.toggle('selected', mode === 'photo');
+      document.getElementById('quizModeCard').classList.toggle('selected', mode === 'quiz');
+      document.getElementById('photoMode').style.display = mode === 'photo' ? 'block' : 'none';
+      document.getElementById('quizMode').style.display = mode === 'quiz' ? 'block' : 'none';
+
+      if (mode === 'quiz') initQuestionnaire();
+    }
+
+    // ── Questionnaire ────────────────────────────
+    function initQuestionnaire() {
+      currentQuestion = 0;
+      answers = {};
+      renderProgressDots();
+      renderQuestion();
+    }
+
+    function renderProgressDots() {
+      const container = document.getElementById('questionProgress');
+      container.innerHTML = questions.map((_, i) => `<div class="q-dot${i === currentQuestion ? ' active' : ''}" id="dot-${i}"></div>`).join('');
+    }
+
+    function renderQuestion() {
+      const q = questions[currentQuestion];
+      const card = document.getElementById('questionCard');
+
+      card.innerHTML = `
+        <div class="question-num">${q.icon} Soru ${currentQuestion + 1} / ${questions.length}</div>
+        <div class="question-text">${q.text}</div>
+        <div class="options-grid" id="optionsGrid">
+          ${q.options.map((opt, i) => `
+            <button class="option-btn${answers[q.id] === opt.value ? ' selected' : ''}" onclick="selectOption('${q.id}', '${opt.value}', this)">
+              <span class="option-icon">${opt.icon}</span>
+              <span class="option-text">${opt.text}</span>
+              <span class="option-check">✓</span>
+            </button>
+          `).join('')}
+        </div>
+      `;
+
+      // Dots güncelle
+      questions.forEach((_, i) => {
+        const dot = document.getElementById(`dot-${i}`);
+        if (!dot) return;
+        dot.className = 'q-dot' + (i === currentQuestion ? ' active' : (answers[questions[i].id] ? ' done' : ''));
+      });
+
+      // Nav butonları
+      document.getElementById('prevBtn').style.display = currentQuestion > 0 ? 'block' : 'none';
+      const isLast = currentQuestion === questions.length - 1;
+      const nextBtn = document.getElementById('nextBtn');
+      nextBtn.textContent = isLast ? '🔬 Analiz Et' : 'İleri →';
+      nextBtn.className = `btn ${isLast ? 'btn-primary' : 'btn-secondary'}`;
+    }
+
+    function selectOption(questionId, value, btn) {
+      answers[questionId] = value;
+      document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    }
+
+    function prevQuestion() {
+      if (currentQuestion > 0) {
+        currentQuestion--;
+        renderQuestion();
+      }
+    }
+
+    function nextQuestion() {
+      const q = questions[currentQuestion];
+      if (!answers[q.id]) {
+        showToast('Lütfen bir seçenek seçin.', 'warning');
+        return;
+      }
+
+      if (currentQuestion < questions.length - 1) {
+        currentQuestion++;
+        renderQuestion();
+      } else {
+        startQuizAnalysis();
+      }
+    }
+
+    async function startQuizAnalysis() {
+      showAnalyzingScreen();
+      try {
+        const data = await AnalysisAPI.analyzeQuestionnaire(answers);
+        localStorage.setItem('skinsense_analysis', JSON.stringify(data.analysis));
+        window.location.href = 'results.html';
+      } catch (err) {
+        hideAnalyzingScreen();
+        showToast(err.message || 'Analiz başarısız.', 'error');
+      }
+    }
+
+    // ── Fotoğraf İşlemleri ───────────────────────
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (file) showPreview(file);
+    }
+
+    function dragOver(e) {
+      e.preventDefault();
+      document.getElementById('uploadArea').classList.add('drag-over');
+    }
+
+    function dragLeave() {
+      document.getElementById('uploadArea').classList.remove('drag-over');
+    }
+
+    function dropFile(e) {
+      e.preventDefault();
+      dragLeave();
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) showPreview(file);
+    }
+
+    function showPreview(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        document.getElementById('previewImg').src = e.target.result;
+        document.getElementById('uploadArea').style.display = 'none';
+        document.getElementById('photoPreview').style.display = 'block';
+        document.getElementById('uploadTips').style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function resetPhoto() {
+      document.getElementById('uploadArea').style.display = 'block';
+      document.getElementById('photoPreview').style.display = 'none';
+      document.getElementById('uploadTips').style.display = 'flex';
+      document.getElementById('fileInput').value = '';
+    }
+
+    async function startPhotoAnalysis() {
+      const imgSrc = document.getElementById('previewImg').src;
+      if (!imgSrc) return;
+      showAnalyzingScreen();
+      try {
+        const data = await AnalysisAPI.analyzePhoto(imgSrc);
+        localStorage.setItem('skinsense_analysis', JSON.stringify(data.analysis));
+        window.location.href = 'results.html';
+      } catch (err) {
+        hideAnalyzingScreen();
+        showToast(err.message || 'Analiz başarısız.', 'error');
+      }
+    }
+
+    // ── Kamera ──────────────────────────────────
+    async function startCamera() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+        document.getElementById('cameraVideo').srcObject = stream;
+        document.getElementById('uploadArea').style.display = 'none';
+        document.getElementById('uploadTips').style.display = 'none';
+        document.getElementById('cameraView').style.display = 'block';
+      } catch (err) {
+        showToast('Kamera erişimi reddedildi.', 'error');
+      }
+    }
+
+    function stopCamera() {
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+        stream = null;
+      }
+      document.getElementById('cameraView').style.display = 'none';
+      document.getElementById('uploadArea').style.display = 'block';
+      document.getElementById('uploadTips').style.display = 'flex';
+    }
+
+    function capturePhoto() {
+      const video = document.getElementById('cameraVideo');
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, 0, 0);
+
+      const dataURL = canvas.toDataURL('image/jpeg', 0.92);
+      document.getElementById('previewImg').src = dataURL;
+      stopCamera();
+      document.getElementById('photoPreview').style.display = 'block';
+    }
+
+    // ── Analiz Ekranı ────────────────────────────
+    function showAnalyzingScreen() {
+      document.getElementById('mainContent').style.display = 'none';
+      document.getElementById('analyzingScreen').classList.add('show');
+    }
+
+    function hideAnalyzingScreen() {
+      document.getElementById('mainContent').style.display = 'block';
+      document.getElementById('analyzingScreen').classList.remove('show');
+    }
+  </script>
+</body>
+</html>
