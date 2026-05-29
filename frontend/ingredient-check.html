@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>İçerik Kontrolü — SkinSense AI</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    .ingredient-page { padding: 100px 0 80px; min-height: 100vh; }
+
+    .ing-hero {
+      background: linear-gradient(135deg, var(--pink-50) 0%, var(--purple-50) 100%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 48px;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .ing-input-area {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .ing-form-card {
+      background: var(--glass-bg-strong);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      padding: 36px;
+      margin-bottom: 32px;
+    }
+
+    .ing-textarea {
+      width: 100%;
+      min-height: 140px;
+      padding: 16px 18px;
+      background: white;
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      color: var(--text-primary);
+      font-size: 0.9375rem;
+      font-family: inherit;
+      resize: vertical;
+      transition: all var(--transition-base);
+      line-height: 1.6;
+    }
+
+    .ing-textarea:focus {
+      border-color: var(--purple-400);
+      box-shadow: 0 0 0 3px rgba(155,114,207,0.15);
+      outline: none;
+    }
+
+    .ing-textarea::placeholder { color: var(--text-light); }
+
+    /* Result */
+    .result-container { display: none; }
+    .result-container.show { display: block; animation: slideUp 0.4s ease both; }
+
+    /* Score Card */
+    .score-card {
+      background: var(--glass-bg-strong);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      padding: 36px;
+      display: flex;
+      align-items: center;
+      gap: 36px;
+      margin-bottom: 28px;
+    }
+
+    .score-circle {
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .score-circle-num {
+      font-family: 'Outfit',sans-serif;
+      font-size: 2.5rem;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .score-circle-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .score-good { background: linear-gradient(135deg,#E8F9F0,#C6F4E0); border: 2px solid #1CA765; }
+    .score-good .score-circle-num { color: #1CA765; }
+    .score-good .score-circle-label { color: #1CA765; }
+
+    .score-medium { background: linear-gradient(135deg,#FFF7E8,#FEECC4); border: 2px solid #E6920A; }
+    .score-medium .score-circle-num { color: #E6920A; }
+    .score-medium .score-circle-label { color: #E6920A; }
+
+    .score-bad { background: linear-gradient(135deg,#FFF0F2,#FFD6DC); border: 2px solid #E8495A; }
+    .score-bad .score-circle-num { color: #E8495A; }
+    .score-bad .score-circle-label { color: #E8495A; }
+
+    .score-info { flex: 1; }
+    .score-verdict {
+      font-family: 'Outfit',sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    .score-summary { color: var(--text-secondary); line-height: 1.6; font-size: 0.9375rem; }
+
+    /* Ingredient Lists */
+    .ing-sections { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+
+    .ing-section {
+      background: var(--glass-bg-strong);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      padding: 24px;
+    }
+
+    .ing-section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .ing-section-icon { font-size: 1.25rem; }
+    .ing-section-title { font-size: 0.9375rem; font-weight: 700; }
+
+    .ing-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--beige-200);
+    }
+
+    .ing-item:last-child { border-bottom: none; }
+    .ing-item-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+    .ing-item-name { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
+    .ing-item-desc { font-size: 0.8125rem; color: var(--text-muted); margin-top: 2px; }
+
+    .ing-empty { color: var(--text-muted); font-size: 0.875rem; text-align: center; padding: 20px; }
+
+    /* Compatibility & Recommendation */
+    .compat-card {
+      background: linear-gradient(135deg, var(--pink-50), var(--purple-50));
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 28px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .compat-item h4 { font-size: 0.875rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .compat-item p { font-size: 0.9375rem; color: var(--text-primary); line-height: 1.6; }
+
+    /* History chips */
+    .ing-history {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .ing-history-chip {
+      padding: 6px 16px;
+      background: var(--beige-200);
+      border: 1px solid var(--beige-400);
+      border-radius: var(--radius-full);
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .ing-history-chip:hover {
+      background: var(--purple-50);
+      border-color: var(--purple-400);
+      color: var(--purple-600);
+    }
+
+    /* Loading */
+    .ing-analyzing {
+      display: none;
+      text-align: center;
+      padding: 48px;
+    }
+
+    .ing-analyzing.show { display: block; }
+
+    @media (max-width: 768px) {
+      .ing-sections { grid-template-columns: 1fr; }
+      .compat-card { grid-template-columns: 1fr; }
+      .score-card { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html" class="nav-logo">
+      <div class="nav-logo-icon">🌸</div>
+      SkinSense AI
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" class="nav-link">Ana Sayfa</a></li>
+      <li><a href="analysis.html" class="nav-link">Cilt Analizi</a></li>
+      <li><a href="ingredient-check.html" class="nav-link active">İçerik Kontrolü</a></li>
+      <li class="auth-only"><a href="dashboard.html" class="nav-link">Panelim</a></li>
+    </ul>
+    <div class="nav-actions">
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="tr">TR</button>
+        <button class="lang-btn" data-lang="en">EN</button>
+      </div>
+      <div class="guest-only flex gap-2">
+        <a href="auth.html" class="btn btn-secondary btn-sm">Giriş Yap</a>
+      </div>
+      <div class="auth-only avatar-menu">
+        <button class="avatar-btn" id="avatarBtn">?</button>
+        <div class="avatar-dropdown">
+          <div class="dropdown-item" onclick="window.location.href='dashboard.html'"><span>📊</span> Panelim</div>
+          <div class="dropdown-item" onclick="window.location.href='profile.html'"><span>👤</span> Profilim</div>
+          <div class="dropdown-item" onclick="window.location.href='history.html'"><span>📅</span> Geçmiş</div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-item danger" onclick="Auth.logout()"><span>🚪</span> Çıkış</div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="ingredient-page">
+    <div class="container">
+      <!-- Hero -->
+      <div class="ing-hero stagger-1">
+        <div class="section-badge">🔬 İçerik Analizi</div>
+        <h1 class="heading-1" style="margin-bottom:12px;">Ürün İçeriklerinizi <span class="gradient-text">Kontrol Edin</span></h1>
+        <p class="body-md" style="color:var(--text-muted);max-width:540px;margin:0 auto;">
+          Ürün adını veya içerik listesini girin — AI güvenli mi, dikkat edilmesi gereken mi, zararlı mı analiz etsin.
+        </p>
+      </div>
+
+      <div class="ing-input-area">
+        <!-- Form -->
+        <div class="ing-form-card stagger-2">
+          <div class="form-stack">
+            <div class="form-group">
+              <label class="form-label">🧴 Ürün Adı</label>
+              <div class="input-wrapper">
+                <span class="input-icon">🧴</span>
+                <input type="text" class="form-input" id="productNameInput" placeholder="ör. CeraVe Foaming Cleanser" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">📋 İçerik Listesi <span style="color:var(--text-muted);font-weight:400;">(Ürün kutusundan kopyalayabilirsiniz)</span></label>
+              <textarea class="ing-textarea" id="ingredientsInput" placeholder="Örnek: Water, Glycerin, Niacinamide, Hyaluronic Acid, Fragrance, Sodium Lauryl Sulfate..."></textarea>
+            </div>
+
+            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+              <button class="btn btn-primary" onclick="analyzeIngredients()" id="analyzeBtn">
+                <span>🔬</span>
+                İçerikleri Analiz Et
+              </button>
+              <button class="btn btn-ghost" onclick="clearForm()">
+                🗑️ Temizle
+              </button>
+              <span class="chip chip-beige">⚡ Ücretsiz</span>
+            </div>
+          </div>
+
+          <!-- Örnek -->
+          <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border-color);">
+            <p style="font-size:0.8125rem;color:var(--text-muted);margin-bottom:10px;">Hızlı deneme:</p>
+            <div class="ing-history">
+              <span class="ing-history-chip" onclick="fillExample('CeraVe Foaming Cleanser', 'Water, Glycerin, Hyaluronic Acid, Niacinamide, Ceramide NP, Fragrance, Sodium Lauryl Sulfate, Cocamidopropyl Betaine')">CeraVe Cleanser</span>
+              <span class="ing-history-chip" onclick="fillExample('Bioderma Sensibio H2O', 'Aqua, PEG-6 Caprylic/Capric Glycerides, Fructooligosaccharides, Mannitol, Xylitol, Rhamnose, Cucumis Sativus Extract')">Bioderma Sensibio</span>
+              <span class="ing-history-chip" onclick="fillExample('La Roche-Posay Anthelios', 'Aqua, Homosalate, Octocrylene, Butyl Methoxydibenzoylmethane, Glycerin, Titanium Dioxide, Oxybenzone')">LRP Anthelios</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analyzing -->
+        <div class="ing-analyzing" id="ingAnalyzing">
+          <div class="ai-pulse-ring" style="width:90px;height:90px;font-size:2.25rem;margin:0 auto 20px;">🧪</div>
+          <h3 class="heading-3" style="margin-bottom:8px;">İçerikler Analiz Ediliyor</h3>
+          <p style="color:var(--text-muted);">AI her içeriği değerlendiriyor...</p>
+        </div>
+
+        <!-- Sonuç -->
+        <div class="result-container" id="resultContainer">
+          <!-- Score -->
+          <div class="score-card stagger-1">
+            <div class="score-circle" id="scoreCircle">
+              <span class="score-circle-num" id="scoreNum">—</span>
+              <span class="score-circle-label">/ 100</span>
+            </div>
+            <div class="score-info">
+              <div class="score-verdict" id="verdictText">—</div>
+              <p class="score-summary" id="summaryText">—</p>
+              <span class="metric-badge" id="verdictBadge" style="margin-top:12px;display:inline-flex;">—</span>
+            </div>
+          </div>
+
+          <!-- İçerik Grupları -->
+          <div class="ing-sections stagger-2">
+            <div class="ing-section">
+              <div class="ing-section-header">
+                <span class="ing-section-icon">✅</span>
+                <span class="ing-section-title" style="color:#1CA765;">Güvenli İçerikler</span>
+              </div>
+              <div id="safeList"></div>
+            </div>
+
+            <div class="ing-section">
+              <div class="ing-section-header">
+                <span class="ing-section-icon">⚠️</span>
+                <span class="ing-section-title" style="color:#E6920A;">Dikkat Gerektiren</span>
+              </div>
+              <div id="cautionList"></div>
+            </div>
+
+            <div class="ing-section">
+              <div class="ing-section-header">
+                <span class="ing-section-icon">❌</span>
+                <span class="ing-section-title" style="color:#E8495A;">Zararlı Olabilir</span>
+              </div>
+              <div id="harmfulList"></div>
+            </div>
+          </div>
+
+          <!-- Uyumluluk -->
+          <div class="compat-card stagger-3">
+            <div class="compat-item">
+              <h4>🎯 Cilt Uyumluluğu</h4>
+              <p id="skinCompatText">—</p>
+            </div>
+            <div class="compat-item">
+              <h4>💡 Öneri</h4>
+              <p id="recommendationText">—</p>
+            </div>
+          </div>
+
+          <!-- Yeni analiz CTA -->
+          <div style="text-align:center;margin-top:24px;">
+            <button class="btn btn-secondary" onclick="clearForm()">🔄 Yeni Ürün Analiz Et</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    function fillExample(name, ingredients) {
+      document.getElementById('productNameInput').value = name;
+      document.getElementById('ingredientsInput').value = ingredients;
+    }
+
+    function clearForm() {
+      document.getElementById('productNameInput').value = '';
+      document.getElementById('ingredientsInput').value = '';
+      document.getElementById('resultContainer').classList.remove('show');
+      document.getElementById('ingAnalyzing').classList.remove('show');
+    }
+
+    async function analyzeIngredients() {
+      const name = document.getElementById('productNameInput').value.trim() || 'Bilinmeyen Ürün';
+      const ingredients = document.getElementById('ingredientsInput').value.trim();
+
+      if (!ingredients) {
+        showToast('Lütfen içerik listesini girin.', 'warning');
+        return;
+      }
+
+      const btn = document.getElementById('analyzeBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner spinner-sm"></span> Analiz ediliyor...';
+
+      document.getElementById('resultContainer').classList.remove('show');
+      document.getElementById('ingAnalyzing').classList.add('show');
+
+      try {
+        const data = await IngredientsAPI.analyze(name, ingredients);
+        renderResult(data.analysis);
+      } catch (err) {
+        showToast(err.message || 'Analiz başarısız.', 'error');
+      }
+
+      document.getElementById('ingAnalyzing').classList.remove('show');
+      btn.disabled = false;
+      btn.innerHTML = '<span>🔬</span> İçerikleri Analiz Et';
+    }
+
+    function renderResult(result) {
+      const score = result.overall_score || 0;
+
+      // Score circle
+      const circle = document.getElementById('scoreCircle');
+      document.getElementById('scoreNum').textContent = score;
+
+      circle.className = 'score-circle';
+      let badgeClass = 'badge-good';
+      if (score >= 70) {
+        circle.classList.add('score-good');
+        badgeClass = 'badge-good';
+      } else if (score >= 40) {
+        circle.classList.add('score-medium');
+        badgeClass = 'badge-medium';
+      } else {
+        circle.classList.add('score-bad');
+        badgeClass = 'badge-concern';
+      }
+
+      document.getElementById('verdictText').textContent = result.overall_verdict || '—';
+      document.getElementById('summaryText').textContent = result.summary || '';
+      const badge = document.getElementById('verdictBadge');
+      badge.textContent = result.overall_verdict || '';
+      badge.className = `metric-badge ${badgeClass}`;
+
+      // Lists
+      renderIngList('safeList', result.safe_ingredients || [], 'benefit');
+      renderIngList('cautionList', result.caution_ingredients || [], 'concern');
+      renderIngList('harmfulList', result.harmful_ingredients || [], 'reason');
+
+      document.getElementById('skinCompatText').textContent = result.skin_compatibility || '—';
+      document.getElementById('recommendationText').textContent = result.recommendation || '—';
+
+      document.getElementById('resultContainer').classList.add('show');
+      document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function renderIngList(containerId, items, descKey) {
+      const container = document.getElementById(containerId);
+      if (!items.length) {
+        container.innerHTML = '<div class="ing-empty">Bulunan içerik yok ✓</div>';
+        return;
+      }
+      container.innerHTML = items.map(item => `
+        <div class="ing-item">
+          <span class="ing-item-icon">${item.icon || '•'}</span>
+          <div>
+            <div class="ing-item-name">${item.name}</div>
+            <div class="ing-item-desc">${item[descKey] || ''}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>

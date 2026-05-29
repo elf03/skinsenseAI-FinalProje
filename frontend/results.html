@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analiz Sonuçları — SkinSense AI</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    .results-page { padding: 100px 0 80px; min-height: 100vh; }
+
+    /* Hero Result */
+    .result-hero {
+      background: var(--grad-pink-purple);
+      border-radius: var(--radius-xl);
+      padding: 48px;
+      display: flex;
+      align-items: center;
+      gap: 40px;
+      margin-bottom: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .result-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.06'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .result-skin-type-badge {
+      width: 120px;
+      height: 120px;
+      background: rgba(255,255,255,0.2);
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      backdrop-filter: blur(10px);
+      position: relative;
+      z-index: 1;
+    }
+
+    .skin-type-icon { font-size: 2.5rem; }
+    .skin-type-label { color: rgba(255,255,255,0.85); font-size: 0.6875rem; font-weight: 600; margin-top: 4px; }
+
+    .result-hero-text { position: relative; z-index: 1; }
+    .result-hero-text h1 { color: white; font-size: clamp(1.5rem,3vw,2.25rem); margin-bottom: 6px; }
+    .result-hero-text p { color: rgba(255,255,255,0.8); font-size: 0.9375rem; margin-bottom: 16px; }
+
+    .result-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+    .result-tag {
+      padding: 5px 14px;
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: var(--radius-full);
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      backdrop-filter: blur(6px);
+    }
+
+    /* Metric Cards Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+
+    .metric-card-custom {
+      background: var(--glass-bg-strong);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      text-align: center;
+      transition: all var(--transition-bounce);
+    }
+
+    .metric-card-custom:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .metric-emoji { font-size: 1.75rem; margin-bottom: 8px; }
+    .metric-name { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+    .metric-val { font-family: 'Outfit',sans-serif; font-size: 1.125rem; font-weight: 700; color: var(--text-primary); }
+
+    /* AI Comments */
+    .ai-comment-card {
+      background: linear-gradient(135deg, var(--pink-50), var(--purple-50));
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 28px 32px;
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      margin-bottom: 40px;
+    }
+
+    .ai-avatar {
+      width: 52px;
+      height: 52px;
+      background: var(--grad-pink-purple);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+      box-shadow: var(--shadow-purple);
+    }
+
+    .ai-comment-list { display: flex; flex-direction: column; gap: 10px; }
+    .ai-comment-item {
+      background: rgba(255,255,255,0.7);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+      border-left: 3px solid var(--purple-400);
+      line-height: 1.55;
+    }
+
+    /* Recommended Ingredients */
+    .ingredients-scroll {
+      display: flex;
+      gap: 14px;
+      overflow-x: auto;
+      padding-bottom: 12px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--mauve-500) transparent;
+    }
+
+    .ingredient-chip-card {
+      background: var(--glass-bg-strong);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      min-width: 160px;
+      flex-shrink: 0;
+      transition: all var(--transition-bounce);
+      cursor: default;
+    }
+
+    .ingredient-chip-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--purple-400);
+    }
+
+    .ingredient-icon { font-size: 1.75rem; margin-bottom: 8px; }
+    .ingredient-name { font-size: 0.875rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+    .ingredient-benefit { font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; }
+
+    /* Products Section */
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .product-card {
+      background: var(--glass-bg-strong);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      transition: all var(--transition-bounce);
+    }
+
+    .product-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .product-img-wrap {
+      height: 180px;
+      background: var(--grad-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .product-img-wrap img {
+      height: 100%;
+      width: 100%;
+      object-fit: contain;
+      padding: 16px;
+      transition: transform var(--transition-slow);
+    }
+
+    .product-card:hover .product-img-wrap img { transform: scale(1.05); }
+
+    .product-info { padding: 16px 20px 20px; }
+    .product-brand { font-size: 0.75rem; font-weight: 600; color: var(--purple-500); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+    .product-name { font-family: 'Outfit',sans-serif; font-size: 0.9375rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+    .product-price { font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); }
+    .product-category-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      background: var(--pink-50);
+      color: var(--pink-600);
+      border-radius: var(--radius-full);
+      font-size: 0.7rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    /* Routine Preview */
+    .routine-tabs {
+      display: flex;
+      background: var(--beige-200);
+      border-radius: var(--radius-full);
+      padding: 4px;
+      gap: 4px;
+      margin-bottom: 24px;
+      width: fit-content;
+    }
+
+    .routine-tab {
+      padding: 10px 24px;
+      border-radius: var(--radius-full);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: transparent;
+      transition: all var(--transition-bounce);
+    }
+
+    .routine-tab.active {
+      background: white;
+      color: var(--purple-600);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .routine-list { display: flex; flex-direction: column; gap: 14px; }
+
+    .routine-step-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 16px 20px;
+      background: var(--glass-bg-strong);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      transition: all var(--transition-base);
+    }
+
+    .routine-step-row:hover {
+      border-color: var(--purple-300);
+      transform: translateX(4px);
+    }
+
+    .step-number {
+      width: 36px;
+      height: 36px;
+      background: var(--grad-pink-purple);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 0.875rem;
+      flex-shrink: 0;
+    }
+
+    .step-icon { font-size: 1.375rem; flex-shrink: 0; }
+
+    .step-info { flex: 1; }
+    .step-type { font-size: 0.75rem; font-weight: 600; color: var(--purple-500); text-transform: uppercase; letter-spacing: 0.05em; }
+    .step-rec { font-size: 0.9375rem; font-weight: 600; color: var(--text-primary); margin: 2px 0; }
+    .step-reason { font-size: 0.8125rem; color: var(--text-muted); }
+
+    /* Section wrapper */
+    .results-section {
+      margin-bottom: 48px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    /* Full details accordion */
+    .details-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .detail-item {
+      background: var(--glass-bg-strong);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .detail-label { font-size: 0.8125rem; color: var(--text-muted); }
+    .detail-val { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
+
+    @media (max-width: 1024px) {
+      .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+      .products-grid { grid-template-columns: repeat(2, 1fr); }
+      .details-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 640px) {
+      .result-hero { flex-direction: column; padding: 32px 24px; }
+      .metrics-grid, .products-grid, .details-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html" class="nav-logo">
+      <div class="nav-logo-icon">🌸</div>
+      SkinSense AI
+    </a>
+    <ul class="nav-links">
+      <li><a href="analysis.html" class="nav-link">Yeni Analiz</a></li>
+      <li class="auth-only"><a href="dashboard.html" class="nav-link">Panelim</a></li>
+      <li class="auth-only"><a href="history.html" class="nav-link">Geçmiş</a></li>
+    </ul>
+    <div class="nav-actions">
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="tr">TR</button>
+        <button class="lang-btn" data-lang="en">EN</button>
+      </div>
+      <div class="avatar-menu">
+        <button class="avatar-btn" id="avatarBtn">?</button>
+        <div class="avatar-dropdown">
+          <div class="dropdown-item" onclick="window.location.href='dashboard.html'"><span>📊</span> Panelim</div>
+          <div class="dropdown-item" onclick="window.location.href='profile.html'"><span>👤</span> Profilim</div>
+          <div class="dropdown-item" onclick="window.location.href='history.html'"><span>📅</span> Geçmiş</div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-item danger" onclick="Auth.logout()"><span>🚪</span> Çıkış</div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="results-page">
+    <div class="container">
+      <!-- Hero Result Card -->
+      <div class="result-hero stagger-1" id="resultHero">
+        <div class="result-skin-type-badge">
+          <span class="skin-type-icon">🌸</span>
+          <span class="skin-type-label" id="skinTypeLabel">Cilt Tipi</span>
+        </div>
+        <div class="result-hero-text">
+          <h1 id="resultTitle">Analiz Tamamlandı!</h1>
+          <p id="resultSubtitle">İşte cilt analizinizin sonuçları</p>
+          <div class="result-tags" id="resultTags"></div>
+        </div>
+      </div>
+
+      <!-- Metric Cards -->
+      <div class="metrics-grid stagger-2" id="metricsGrid"></div>
+
+      <!-- AI Yorumları -->
+      <div class="results-section stagger-3">
+        <div class="section-header">
+          <h2 class="heading-2">🤖 AI Yorumları</h2>
+        </div>
+        <div class="ai-comment-card">
+          <div class="ai-avatar">🤖</div>
+          <div class="ai-comment-list" id="aiComments"></div>
+        </div>
+      </div>
+
+      <!-- Detay Tablosu -->
+      <div class="results-section stagger-3">
+        <div class="section-header">
+          <h2 class="heading-2">📊 Detaylı Analiz</h2>
+        </div>
+        <div class="details-grid" id="detailsGrid"></div>
+      </div>
+
+      <!-- Önerilen İçerikler -->
+      <div class="results-section stagger-4">
+        <div class="section-header">
+          <h2 class="heading-2">⚗️ Önerilen İçerikler</h2>
+          <span class="chip chip-purple">Cilt tipinize özel</span>
+        </div>
+        <div class="ingredients-scroll" id="ingredientsScroll"></div>
+      </div>
+
+      <!-- Bakım Rutini -->
+      <div class="results-section stagger-4">
+        <div class="section-header">
+          <h2 class="heading-2">📅 Kişisel Bakım Rutininiz</h2>
+        </div>
+        <div class="routine-tabs">
+          <button class="routine-tab active" onclick="showRoutine('morning', this)">☀️ Sabah</button>
+          <button class="routine-tab" onclick="showRoutine('evening', this)">🌙 Akşam</button>
+        </div>
+        <div class="routine-list" id="routineList"></div>
+      </div>
+
+      <!-- Ürün Önerileri -->
+      <div class="results-section stagger-5">
+        <div class="section-header">
+          <h2 class="heading-2">🧴 Önerilen Ürünler</h2>
+          <span class="chip chip-pink">Bioderma • CeraVe • La Roche-Posay</span>
+        </div>
+        <div id="productsLoading" style="text-align:center;padding:40px;">
+          <div class="spinner" style="margin:0 auto 16px;"></div>
+          <p style="color:var(--text-muted);">Ürünler yükleniyor...</p>
+        </div>
+        <div class="products-grid" id="productsGrid" style="display:none;"></div>
+      </div>
+
+      <!-- Alt CTA -->
+      <div style="text-align:center;padding:40px 0;" class="stagger-6">
+        <h3 class="heading-3" style="margin-bottom:16px;">Başka bir analiz yapmak ister misiniz?</h3>
+        <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
+          <a href="analysis.html" class="btn btn-primary btn-lg">🔬 Yeni Analiz</a>
+          <a href="ingredient-check.html" class="btn btn-secondary btn-lg">🧪 İçerik Kontrol</a>
+          <a href="dashboard.html" class="btn btn-secondary btn-lg">📊 Panelim</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    let analysisData = null;
+    let currentRoutine = 'morning';
+
+    const skinTypeIcons = {
+      'Normal': '✨', 'Yağlı': '💧', 'Kuru': '🌵',
+      'Karma': '🔀', 'Hassas': '🌸'
+    };
+
+    const detailLabels = {
+      acne_level: { label: 'Akne Seviyesi', icon: '🔴' },
+      sensitivity: { label: 'Hassasiyet', icon: '🌡️' },
+      blackheads: { label: 'Siyah Nokta', icon: '⚫' },
+      pores: { label: 'Gözenek', icon: '🔍' },
+      oiliness: { label: 'Yağlılık', icon: '💦' },
+      redness: { label: 'Kızarıklık', icon: '🌹' },
+      dark_spots: { label: 'Leke', icon: '🟫' },
+      dark_circles: { label: 'Göz Altı Morluğu', icon: '👁️' },
+      tone_evenness: { label: 'Cilt Tonu', icon: '🎨' },
+    };
+
+    async function loadResults() {
+      // localStorage'dan analiz verisini al
+      const stored = localStorage.getItem('skinsense_analysis');
+      if (stored) {
+        analysisData = JSON.parse(stored);
+        renderResults();
+        loadProducts();
+        return;
+      }
+
+      // Yoksa API'den son analizi al
+      if (Auth.isLoggedIn()) {
+        try {
+          const data = await AnalysisAPI.getLatest();
+          if (data.analysis) {
+            analysisData = data.analysis;
+            renderResults();
+            loadProducts();
+            return;
+          }
+        } catch (e) {}
+      }
+
+      // Hiç analiz yoksa yönlendir
+      showToast('Önce bir analiz yapın.', 'warning');
+      setTimeout(() => window.location.href = 'analysis.html', 1500);
+    }
+
+    function renderResults() {
+      if (!analysisData) return;
+      const d = analysisData;
+
+      // Hero
+      const icon = skinTypeIcons[d.skin_type] || '🌸';
+      document.getElementById('skinTypeLabel').textContent = d.skin_type || 'Belirsiz';
+      document.querySelector('.skin-type-icon').textContent = icon;
+      document.getElementById('resultTitle').textContent = `Cilt Tipiniz: ${d.skin_type} ${icon}`;
+      document.getElementById('resultSubtitle').textContent = 'İşte kişisel cilt analizinizin detayları';
+
+      const tags = document.getElementById('resultTags');
+      const tagItems = [
+        d.acne_level !== 'Yok' ? `🔴 Akne: ${d.acne_level}` : null,
+        d.sensitivity !== 'Düşük' ? `🌡️ Hassas` : null,
+        d.dark_spots !== 'Yok' ? `🟫 Leke` : null,
+        `💧 Nem: %${d.moisture_level || '?'}`,
+      ].filter(Boolean);
+      tags.innerHTML = tagItems.map(t => `<span class="result-tag">${t}</span>`).join('');
+
+      // Metrics
+      const metrics = [
+        { icon: '💧', name: 'Nem Oranı', value: `%${d.moisture_level || '?'}`, color: 'badge-good' },
+        { icon: '🔴', name: 'Akne Seviyesi', value: d.acne_level || '?', color: getLevelBadgeClass(d.acne_level) },
+        { icon: '🌡️', name: 'Hassasiyet', value: d.sensitivity || '?', color: getLevelBadgeClass(d.sensitivity) },
+        { icon: '💦', name: 'Yağlılık', value: d.oiliness || '?', color: getLevelBadgeClass(d.oiliness) },
+      ];
+
+      document.getElementById('metricsGrid').innerHTML = metrics.map((m, i) => `
+        <div class="metric-card-custom stagger-${i+1}">
+          <div class="metric-emoji">${m.icon}</div>
+          <div class="metric-name">${m.name}</div>
+          <div class="metric-val">${m.value}</div>
+          <span class="metric-badge ${m.color}" style="margin-top:8px;display:inline-flex;">${m.value}</span>
+        </div>
+      `).join('');
+
+      // AI Comments
+      const comments = d.ai_comments || [];
+      document.getElementById('aiComments').innerHTML = comments.map(c => `
+        <div class="ai-comment-item">${c}</div>
+      `).join('') || '<div class="ai-comment-item">Analiz tamamlandı! Sonuçlarınızı inceleyin. ✨</div>';
+
+      // Details
+      document.getElementById('detailsGrid').innerHTML = Object.entries(detailLabels).map(([key, meta]) => `
+        <div class="detail-item">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span>${meta.icon}</span>
+            <span class="detail-label">${meta.label}</span>
+          </div>
+          <span class="metric-badge ${getLevelBadgeClass(d[key])}">${d[key] || '?'}</span>
+        </div>
+      `).join('');
+
+      // Ingredients
+      const ings = d.recommended_ingredients || [];
+      document.getElementById('ingredientsScroll').innerHTML = ings.map(ing => `
+        <div class="ingredient-chip-card">
+          <div class="ingredient-icon">${ing.icon || '⚗️'}</div>
+          <div class="ingredient-name">${ing.name}</div>
+          <div class="ingredient-benefit">${ing.benefit}</div>
+        </div>
+      `).join('') || '<div style="color:var(--text-muted);padding:20px;">İçerik önerileri yükleniyor...</div>';
+
+      // Routine
+      showRoutine('morning', document.querySelector('.routine-tab'));
+    }
+
+    function showRoutine(type, btn) {
+      currentRoutine = type;
+      document.querySelectorAll('.routine-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+
+      if (!analysisData) return;
+      const steps = type === 'morning' ? analysisData.morning_routine : analysisData.evening_routine;
+
+      document.getElementById('routineList').innerHTML = (steps || []).map(step => `
+        <div class="routine-step-row">
+          <div class="step-number">${step.step}</div>
+          <div class="step-icon">${step.icon || '🧴'}</div>
+          <div class="step-info">
+            <div class="step-type">${step.product_type}</div>
+            <div class="step-rec">${step.recommendation}</div>
+            <div class="step-reason">💡 ${step.reason}</div>
+          </div>
+        </div>
+      `).join('') || '<div style="text-align:center;color:var(--text-muted);padding:20px;">Rutin bilgisi bulunamadı.</div>';
+    }
+
+    async function loadProducts() {
+      if (!analysisData) return;
+
+      try {
+        const skinType = analysisData.skin_type;
+        const concerns = [analysisData.acne_level !== 'Yok' ? 'akne' : null,
+                         analysisData.dark_spots !== 'Yok' ? 'leke' : null].filter(Boolean);
+
+        const data = await ProductsAPI.recommend(skinType, concerns);
+        renderProducts(data.products);
+      } catch (e) {
+        document.getElementById('productsLoading').innerHTML = '<p style="color:var(--text-muted);">Ürünler yüklenemedi.</p>';
+      }
+    }
+
+    function renderProducts(products) {
+      document.getElementById('productsLoading').style.display = 'none';
+      const grid = document.getElementById('productsGrid');
+      grid.style.display = 'grid';
+
+      if (!products?.length) {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px;">Ürün bulunamadı.</div>';
+        return;
+      }
+
+      const categoryIcons = { cleanser: '🧼', moisturizer: '💧', serum: '✨', sunscreen: '☀️', toner: '💦' };
+      const categoryNames = { cleanser: 'Temizleyici', moisturizer: 'Nemlendirici', serum: 'Serum', sunscreen: 'Güneş Kremi', toner: 'Tonik' };
+
+      grid.innerHTML = products.slice(0, 6).map((p, i) => `
+        <div class="product-card stagger-${Math.min(i+1,6)}">
+          <div class="product-img-wrap">
+            ${p.image_url ? `<img src="${p.image_url}" alt="${p.name}" onerror="this.style.display='none';this.parentElement.innerHTML='<span style=\\'font-size:3rem\\'>🧴</span>'" />` : '<span style="font-size:3rem">🧴</span>'}
+          </div>
+          <div class="product-info">
+            <div class="product-category-chip">
+              ${categoryIcons[p.category] || '🧴'} ${categoryNames[p.category] || p.category || 'Ürün'}
+            </div>
+            <div class="product-brand">${p.brand}</div>
+            <div class="product-name">${p.name}</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
+              <div class="product-price">${p.price || ''}</div>
+              ${p.product_url ? `<a href="${p.product_url}" target="_blank" class="btn btn-primary btn-sm" style="font-size:0.75rem;padding:6px 14px;">Satın Al →</a>` : ''}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', loadResults);
+  </script>
+</body>
+</html>
