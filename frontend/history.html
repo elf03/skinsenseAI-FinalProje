@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analiz Geçmişi — SkinSense AI</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    .history-page { padding: 100px 0 80px; min-height: 100vh; }
+
+    /* Timeline */
+    .history-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 32px; }
+
+    .history-list { display: flex; flex-direction: column; gap: 14px; }
+
+    .history-item {
+      background: var(--glass-bg-strong);
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      cursor: pointer;
+      transition: all var(--transition-bounce);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .history-item:hover {
+      border-color: var(--purple-400);
+      box-shadow: var(--shadow-sm);
+      transform: translateX(4px);
+    }
+
+    .history-item.active {
+      border-color: var(--purple-500);
+      background: var(--purple-50);
+      box-shadow: var(--shadow-purple);
+    }
+
+    .history-type-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .type-photo { background: var(--pink-50); }
+    .type-quiz { background: var(--purple-50); }
+
+    .history-info { flex: 1; min-width: 0; }
+    .history-date { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); }
+    .history-skin-type { font-size: 0.75rem; color: var(--text-muted); }
+
+    .history-badge { flex-shrink: 0; }
+
+    /* Detail panel */
+    .detail-panel {
+      background: var(--glass-bg-strong);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      padding: 32px;
+      position: sticky;
+      top: 100px;
+      max-height: calc(100vh - 140px);
+      overflow-y: auto;
+    }
+
+    /* Comparison Slider */
+    .compare-section {
+      background: var(--glass-bg-strong);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      padding: 32px;
+      margin-top: 32px;
+    }
+
+    .compare-slider-wrap {
+      position: relative;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      user-select: none;
+      height: 320px;
+      background: var(--beige-200);
+    }
+
+    .compare-img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .compare-after-img {
+      clip-path: inset(0 50% 0 0);
+      transition: none;
+    }
+
+    .compare-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 3px;
+      background: white;
+      z-index: 10;
+      cursor: ew-resize;
+    }
+
+    .compare-handle-btn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 44px;
+      height: 44px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      font-size: 1rem;
+      color: var(--purple-600);
+      cursor: ew-resize;
+      white-space: nowrap;
+    }
+
+    .compare-label {
+      position: absolute;
+      bottom: 12px;
+      padding: 4px 12px;
+      background: rgba(61,45,69,0.7);
+      color: white;
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+      font-weight: 600;
+      backdrop-filter: blur(6px);
+      z-index: 5;
+    }
+
+    .label-before { left: 12px; }
+    .label-after { right: 12px; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 80px 40px;
+    }
+
+    .empty-icon { font-size: 5rem; margin-bottom: 20px; animation: float 3s ease-in-out infinite; display: block; }
+
+    /* Detail metrics */
+    .detail-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    .detail-metric-item {
+      background: var(--beige-100);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+    }
+
+    .detail-metric-label { font-size: 0.7rem; color: var(--text-muted); font-weight: 600; margin-bottom: 3px; }
+    .detail-metric-val { font-size: 0.875rem; font-weight: 700; color: var(--text-primary); }
+
+    /* Compare select */
+    .compare-select-row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .compare-select {
+      padding: 10px 14px;
+      background: var(--glass-bg-strong);
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+
+    .compare-select:focus { border-color: var(--purple-400); outline: none; }
+
+    .compare-vs {
+      font-family: 'Outfit',sans-serif;
+      font-size: 1.125rem;
+      font-weight: 800;
+      color: var(--purple-500);
+    }
+
+    /* No photo placeholder */
+    .photo-placeholder {
+      width: 100%;
+      height: 200px;
+      background: linear-gradient(135deg, var(--pink-50), var(--purple-50));
+      border-radius: var(--radius-lg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 1024px) {
+      .history-grid { grid-template-columns: 1fr; }
+      .detail-panel { position: static; max-height: none; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html" class="nav-logo">
+      <div class="nav-logo-icon">🌸</div>
+      SkinSense AI
+    </a>
+    <ul class="nav-links">
+      <li><a href="dashboard.html" class="nav-link">Panelim</a></li>
+      <li><a href="analysis.html" class="nav-link">Yeni Analiz</a></li>
+      <li><a href="history.html" class="nav-link active">Geçmiş</a></li>
+    </ul>
+    <div class="nav-actions">
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="tr">TR</button>
+        <button class="lang-btn" data-lang="en">EN</button>
+      </div>
+      <div class="avatar-menu">
+        <button class="avatar-btn">?</button>
+        <div class="avatar-dropdown">
+          <div class="dropdown-item" onclick="window.location.href='profile.html'"><span>👤</span> Profilim</div>
+          <div class="dropdown-item" onclick="window.location.href='ingredient-check.html'"><span>🔬</span> İçerik Kontrolü</div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-item danger" onclick="Auth.logout()"><span>🚪</span> Çıkış</div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="history-page">
+    <div class="container">
+      <div style="margin-bottom:32px;" class="stagger-1">
+        <div class="section-badge">📅 Geçmiş</div>
+        <h1 class="heading-1" style="margin-bottom:8px;">Analiz <span class="gradient-text">Geçmişiniz</span></h1>
+        <p style="color:var(--text-muted);">Tüm analizlerinizi görüntüleyin ve ilerlemenizi takip edin</p>
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="empty-state" style="display:none;">
+        <span class="empty-icon">📋</span>
+        <h3 class="heading-3" style="margin-bottom:10px;">Henüz analiz yok</h3>
+        <p style="color:var(--text-muted);margin-bottom:24px;">İlk analizinizi yaparak geçmişinizi oluşturun.</p>
+        <a href="analysis.html" class="btn btn-primary">🔬 İlk Analizi Yap</a>
+      </div>
+
+      <!-- History Grid -->
+      <div id="historyContent" style="display:none;">
+        <div class="history-grid">
+          <!-- Liste -->
+          <div>
+            <div class="history-list" id="historyList"></div>
+          </div>
+
+          <!-- Detay Paneli -->
+          <div class="detail-panel" id="detailPanel">
+            <div id="detailContent">
+              <div style="text-align:center;color:var(--text-muted);padding:40px;">
+                ← Sol taraftan bir analiz seçin
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Karşılaştırma -->
+        <div class="compare-section stagger-4" id="compareSection" style="display:none;">
+          <h3 class="heading-3" style="margin-bottom:20px;">🔄 Önce / Sonra Karşılaştırması</h3>
+
+          <div class="compare-select-row">
+            <select class="compare-select" id="compareA" onchange="updateComparison()">
+              <option value="">Analiz 1 seçin</option>
+            </select>
+            <div class="compare-vs">VS</div>
+            <select class="compare-select" id="compareB" onchange="updateComparison()">
+              <option value="">Analiz 2 seçin</option>
+            </select>
+          </div>
+
+          <!-- Slider -->
+          <div class="compare-slider-wrap" id="sliderWrap" style="display:none;">
+            <img class="compare-img" id="compareImgBefore" src="" alt="Önce" />
+            <img class="compare-img compare-after-img" id="compareImgAfter" src="" alt="Sonra" />
+            <div class="compare-line" id="compareLine">
+              <div class="compare-handle-btn">⟵⟶</div>
+            </div>
+            <span class="compare-label label-before">Önce</span>
+            <span class="compare-label label-after">Sonra</span>
+          </div>
+
+          <!-- No photo notice -->
+          <div id="compareNoPhoto" style="display:none;">
+            <div class="photo-placeholder">
+              <span style="font-size:2.5rem;">📸</span>
+              <span>Fotoğraflı analiz bulunamadı</span>
+              <a href="analysis.html" class="btn btn-secondary btn-sm">Fotoğraflı Analiz Yap</a>
+            </div>
+          </div>
+
+          <!-- Metric Comparison -->
+          <div id="metricComparison" style="display:none;margin-top:20px;">
+            <h4 class="heading-3" style="margin-bottom:16px;">📊 Metrik Karşılaştırması</h4>
+            <div id="metricCompGrid"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    if (!Auth.isLoggedIn()) window.location.href = 'auth.html';
+
+    let analyses = [];
+    let selectedId = null;
+    let isDragging = false;
+
+    const skinTypeIcons = { 'Normal':'✨','Yağlı':'💧','Kuru':'🌵','Karma':'🔀','Hassas':'🌸' };
+
+    async function loadHistory() {
+      try {
+        const data = await AnalysisAPI.getHistory();
+        analyses = data.analyses || [];
+
+        if (!analyses.length) {
+          document.getElementById('emptyState').style.display = 'block';
+          return;
+        }
+
+        document.getElementById('historyContent').style.display = 'block';
+        renderList();
+        populateCompareSelects();
+
+        if (analyses.length >= 2) {
+          document.getElementById('compareSection').style.display = 'block';
+        }
+
+        // İlk analizi seç
+        selectAnalysis(analyses[0].id);
+      } catch (e) {
+        showToast('Geçmiş yüklenemedi.', 'error');
+      }
+    }
+
+    function renderList() {
+      document.getElementById('historyList').innerHTML = analyses.map(a => `
+        <div class="history-item${a.id === selectedId ? ' active' : ''}" onclick="selectAnalysis(${a.id})" id="item-${a.id}">
+          <div class="history-type-icon ${a.analysis_type === 'photo' ? 'type-photo' : 'type-quiz'}">
+            ${a.analysis_type === 'photo' ? '📸' : '🤖'}
+          </div>
+          <div class="history-info">
+            <div class="history-date">${formatDate(a.created_at)}</div>
+            <div class="history-skin-type">${a.skin_type || '—'} ${skinTypeIcons[a.skin_type] || ''} • %${a.moisture_level || '?'} nem</div>
+          </div>
+          <span class="metric-badge ${getLevelBadgeClass(a.acne_level)} history-badge">${a.acne_level || '?'}</span>
+        </div>
+      `).join('');
+    }
+
+    function selectAnalysis(id) {
+      selectedId = id;
+
+      document.querySelectorAll('.history-item').forEach(el => {
+        el.classList.toggle('active', el.id === `item-${id}`);
+      });
+
+      const analysis = analyses.find(a => a.id === id);
+      if (!analysis) return;
+
+      localStorage.setItem('skinsense_analysis', JSON.stringify(analysis));
+      renderDetail(analysis);
+    }
+
+    function renderDetail(a) {
+      const icon = skinTypeIcons[a.skin_type] || '🌸';
+      const date = formatDate(a.created_at);
+
+      document.getElementById('detailContent').innerHTML = `
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border-color);">
+          <div style="width:54px;height:54px;background:var(--grad-pink-purple);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">${icon}</div>
+          <div>
+            <div style="font-family:'Outfit',sans-serif;font-size:1.25rem;font-weight:800;">${a.skin_type || '?'} ${icon}</div>
+            <div style="font-size:0.8125rem;color:var(--text-muted);">${date} • ${a.analysis_type === 'photo' ? '📸 Fotoğraf' : '🤖 Anket'}</div>
+          </div>
+        </div>
+
+        <div class="detail-metrics">
+          <div class="detail-metric-item">
+            <div class="detail-metric-label">💧 Nem</div>
+            <div class="detail-metric-val">%${a.moisture_level || '?'}</div>
+          </div>
+          <div class="detail-metric-item">
+            <div class="detail-metric-label">🔴 Akne</div>
+            <div class="detail-metric-val">${a.acne_level || '?'}</div>
+          </div>
+          <div class="detail-metric-item">
+            <div class="detail-metric-label">🌡️ Hassasiyet</div>
+            <div class="detail-metric-val">${a.sensitivity || '?'}</div>
+          </div>
+          <div class="detail-metric-item">
+            <div class="detail-metric-label">💦 Yağlılık</div>
+            <div class="detail-metric-val">${a.oiliness || '?'}</div>
+          </div>
+          <div class="detail-metric-item">
+            <div class="detail-metric-label">🔍 Gözenek</div>
+            <div class="detail-metric-val">${a.pores || '?'}</div>
+          </div>
+          <div class="detail-metric-item">
+            <div class="detail-metric-label">🌹 Kızarıklık</div>
+            <div class="detail-metric-val">${a.redness || '?'}</div>
+          </div>
+        </div>
+
+        ${a.ai_comments?.length ? `
+          <div style="margin-top:16px;">
+            <div style="font-size:0.8125rem;font-weight:700;color:var(--text-muted);margin-bottom:8px;">🤖 AI YORUMLARI</div>
+            ${a.ai_comments.map(c => `<div style="background:var(--beige-200);border-radius:var(--radius-md);padding:10px 12px;font-size:0.8125rem;color:var(--text-secondary);margin-bottom:8px;border-left:3px solid var(--purple-400);">${c}</div>`).join('')}
+          </div>
+        ` : ''}
+
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <a href="results.html" class="btn btn-primary btn-sm" style="flex:1;justify-content:center;">📊 Detayları Gör</a>
+        </div>
+      `;
+    }
+
+    function populateCompareSelects() {
+      const options = analyses.map(a =>
+        `<option value="${a.id}">${formatDate(a.created_at)} — ${a.skin_type || '?'}</option>`
+      ).join('');
+
+      document.getElementById('compareA').innerHTML = `<option value="">Analiz 1 seçin</option>${options}`;
+      document.getElementById('compareB').innerHTML = `<option value="">Analiz 2 seçin</option>${options}`;
+
+      if (analyses.length >= 2) {
+        document.getElementById('compareA').value = analyses[analyses.length - 1].id;
+        document.getElementById('compareB').value = analyses[0].id;
+        updateComparison();
+      }
+    }
+
+    async function updateComparison() {
+      const idA = parseInt(document.getElementById('compareA').value);
+      const idB = parseInt(document.getElementById('compareB').value);
+
+      if (!idA || !idB || idA === idB) return;
+
+      const aData = analyses.find(a => a.id === idA);
+      const bData = analyses.find(a => a.id === idB);
+
+      if (!aData || !bData) return;
+
+      // Fotoğraf karşılaştırma
+      const hasPhotos = aData.analysis_type === 'photo' && bData.analysis_type === 'photo';
+
+      if (hasPhotos) {
+        document.getElementById('compareNoPhoto').style.display = 'none';
+        document.getElementById('sliderWrap').style.display = 'block';
+
+        // Fotoğrafları yükle
+        try {
+          const [photoA, photoB] = await Promise.all([
+            AnalysisAPI.getPhoto(idA),
+            AnalysisAPI.getPhoto(idB)
+          ]);
+          document.getElementById('compareImgBefore').src = photoA.photo;
+          document.getElementById('compareImgAfter').src = photoB.photo;
+          initSlider();
+        } catch (e) {
+          document.getElementById('sliderWrap').style.display = 'none';
+          document.getElementById('compareNoPhoto').style.display = 'block';
+        }
+      } else {
+        document.getElementById('sliderWrap').style.display = 'none';
+        document.getElementById('compareNoPhoto').style.display = 'block';
+      }
+
+      // Metrik karşılaştırma
+      renderMetricComparison(aData, bData);
+    }
+
+    function initSlider() {
+      const wrap = document.getElementById('sliderWrap');
+      const line = document.getElementById('compareLine');
+      const afterImg = document.querySelector('.compare-after-img');
+
+      function updateSlider(x) {
+        const rect = wrap.getBoundingClientRect();
+        const pct = Math.min(Math.max((x - rect.left) / rect.width, 0), 1);
+        line.style.left = `${pct * 100}%`;
+        afterImg.style.clipPath = `inset(0 ${(1 - pct) * 100}% 0 0)`;
+      }
+
+      wrap.addEventListener('mousedown', e => { isDragging = true; updateSlider(e.clientX); });
+      document.addEventListener('mousemove', e => { if (isDragging) updateSlider(e.clientX); });
+      document.addEventListener('mouseup', () => { isDragging = false; });
+
+      wrap.addEventListener('touchstart', e => { isDragging = true; updateSlider(e.touches[0].clientX); }, { passive: true });
+      document.addEventListener('touchmove', e => { if (isDragging) updateSlider(e.touches[0].clientX); }, { passive: true });
+      document.addEventListener('touchend', () => { isDragging = false; });
+    }
+
+    function renderMetricComparison(a, b) {
+      document.getElementById('metricComparison').style.display = 'block';
+
+      const metrics = [
+        { key: 'moisture_level', label: '💧 Nem', suffix: '%' },
+        { key: 'acne_level', label: '🔴 Akne', suffix: '' },
+        { key: 'sensitivity', label: '🌡️ Hassasiyet', suffix: '' },
+        { key: 'pores', label: '🔍 Gözenek', suffix: '' },
+      ];
+
+      document.getElementById('metricCompGrid').innerHTML = `
+        <div style="display:grid;grid-template-columns:auto 1fr 1fr;gap:10px;align-items:center;background:var(--beige-100);border-radius:var(--radius-lg);padding:16px;">
+          <div style="font-size:0.75rem;font-weight:700;color:var(--text-muted);">METRİK</div>
+          <div style="font-size:0.75rem;font-weight:700;color:var(--text-muted);text-align:center;">${formatDate(a.created_at)}</div>
+          <div style="font-size:0.75rem;font-weight:700;color:var(--text-muted);text-align:center;">${formatDate(b.created_at)}</div>
+          ${metrics.map(m => `
+            <div style="font-size:0.875rem;color:var(--text-secondary);">${m.label}</div>
+            <div style="text-align:center;"><span class="metric-badge ${getLevelBadgeClass(a[m.key])}">${a[m.key] || '?'}${m.suffix}</span></div>
+            <div style="text-align:center;"><span class="metric-badge ${getLevelBadgeClass(b[m.key])}">${b[m.key] || '?'}${m.suffix}</span></div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    document.addEventListener('DOMContentLoaded', loadHistory);
+  </script>
+</body>
+</html>

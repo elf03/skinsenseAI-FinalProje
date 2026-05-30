@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panelim — SkinSense AI</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .dashboard-page { padding: 100px 0 80px; min-height: 100vh; }
+
+    /* Welcome Banner */
+    .welcome-banner {
+      background: var(--grad-pink-purple);
+      border-radius: var(--radius-xl);
+      padding: 36px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .welcome-banner::before {
+      content: '🌸';
+      position: absolute;
+      right: 180px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 8rem;
+      opacity: 0.08;
+      pointer-events: none;
+    }
+
+    .welcome-text h2 { color: white; font-size: 1.75rem; margin-bottom: 4px; }
+    .welcome-text p { color: rgba(255,255,255,0.8); font-size: 0.9375rem; }
+    .welcome-actions { display: flex; gap: 12px; flex-shrink: 0; }
+
+    .btn-white {
+      background: white;
+      color: var(--purple-600);
+      font-weight: 700;
+      border-radius: var(--radius-full);
+      padding: 10px 22px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all var(--transition-bounce);
+      font-size: 0.9rem;
+    }
+    .btn-white:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+
+    .btn-outline-white {
+      background: rgba(255,255,255,0.15);
+      border: 1.5px solid rgba(255,255,255,0.4);
+      color: white;
+      border-radius: var(--radius-full);
+      padding: 10px 22px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all var(--transition-bounce);
+      font-size: 0.9rem;
+      font-weight: 600;
+      backdrop-filter: blur(6px);
+    }
+    .btn-outline-white:hover { background: rgba(255,255,255,0.25); transform: translateY(-2px); }
+
+    /* Quick Stats */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--glass-bg-strong);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: all var(--transition-bounce);
+    }
+
+    .stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.375rem;
+      flex-shrink: 0;
+    }
+
+    .stat-icon-pink { background: var(--pink-50); }
+    .stat-icon-purple { background: var(--purple-50); }
+    .stat-icon-beige { background: var(--beige-200); }
+    .stat-icon-rose { background: #FFF0F3; }
+
+    .stat-num { font-family: 'Outfit',sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--text-primary); }
+    .stat-label { font-size: 0.8125rem; color: var(--text-muted); font-weight: 500; }
+
+    /* Dashboard Grid */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+    }
+
+    /* Latest Analysis Card */
+    .latest-analysis-card {
+      background: var(--glass-bg-strong);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      padding: 28px;
+    }
+
+    .skin-metrics-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    .skin-metric-item {
+      background: var(--beige-100);
+      border-radius: var(--radius-md);
+      padding: 14px;
+    }
+
+    .sm-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-bottom: 6px; }
+    .sm-value { font-size: 1.0625rem; font-weight: 700; color: var(--text-primary); }
+
+    /* Sidebar */
+    .dashboard-sidebar { display: flex; flex-direction: column; gap: 20px; }
+
+    /* AI Tip */
+    .ai-tip-card {
+      background: linear-gradient(135deg, var(--pink-50), var(--purple-50));
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 24px;
+    }
+
+    .ai-tip-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .ai-tip-icon {
+      width: 36px; height: 36px;
+      background: var(--grad-pink-purple);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+    }
+
+    .ai-tip-list { display: flex; flex-direction: column; gap: 10px; }
+    .ai-tip-item {
+      background: rgba(255,255,255,0.7);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      border-left: 3px solid var(--purple-400);
+      line-height: 1.5;
+    }
+
+    /* Quick Actions */
+    .quick-actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .quick-action-btn {
+      background: var(--glass-bg-strong);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transition-bounce);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .quick-action-btn:hover {
+      border-color: var(--purple-400);
+      background: var(--purple-50);
+      transform: translateY(-3px);
+    }
+
+    .qa-icon { font-size: 1.5rem; }
+    .qa-text { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); }
+
+    /* Chart Card */
+    .chart-card {
+      background: var(--glass-bg-strong);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      padding: 28px;
+      margin-top: 24px;
+    }
+
+    /* No Analysis State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 40px;
+    }
+
+    .empty-icon { font-size: 5rem; margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
+
+    @media (max-width: 1024px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 640px) {
+      .welcome-banner { flex-direction: column; padding: 28px 24px; }
+      .welcome-banner::before { display: none; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .skin-metrics-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html" class="nav-logo">
+      <div class="nav-logo-icon">🌸</div>
+      SkinSense AI
+    </a>
+    <ul class="nav-links">
+      <li><a href="dashboard.html" class="nav-link active">Panelim</a></li>
+      <li><a href="analysis.html" class="nav-link">Yeni Analiz</a></li>
+      <li><a href="history.html" class="nav-link">Geçmiş</a></li>
+      <li><a href="ingredient-check.html" class="nav-link">İçerik Kontrolü</a></li>
+    </ul>
+    <div class="nav-actions">
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="tr">TR</button>
+        <button class="lang-btn" data-lang="en">EN</button>
+      </div>
+      <div class="avatar-menu">
+        <button class="avatar-btn" id="avatarBtn">?</button>
+        <div class="avatar-dropdown">
+          <div class="dropdown-item" onclick="window.location.href='profile.html'"><span>👤</span> Profilim</div>
+          <div class="dropdown-item" onclick="window.location.href='history.html'"><span>📅</span> Analiz Geçmişi</div>
+          <div class="dropdown-item" onclick="window.location.href='ingredient-check.html'"><span>🔬</span> İçerik Kontrolü</div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-item danger" onclick="Auth.logout()"><span>🚪</span> Çıkış Yap</div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="dashboard-page">
+    <div class="container">
+      <!-- Welcome Banner -->
+      <div class="welcome-banner stagger-1">
+        <div class="welcome-text">
+          <h2 id="welcomeText">Hoş geldiniz! 👋</h2>
+          <p id="welcomeSubtitle">Bugün cildinize nasıl bakacaksınız?</p>
+        </div>
+        <div class="welcome-actions">
+          <a href="analysis.html" class="btn-white">🔬 Yeni Analiz</a>
+          <a href="history.html" class="btn-outline-white">📅 Geçmişim</a>
+        </div>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="stats-row stagger-2" id="statsRow">
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-pink">📊</div>
+          <div>
+            <div class="stat-num" id="statAnalysisCount">—</div>
+            <div class="stat-label">Toplam Analiz</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-purple">🧬</div>
+          <div>
+            <div class="stat-num" id="statSkinType">—</div>
+            <div class="stat-label">Cilt Tipiniz</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-beige">💧</div>
+          <div>
+            <div class="stat-num" id="statMoisture">—%</div>
+            <div class="stat-label">Nem Oranı</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-rose">🌸</div>
+          <div>
+            <div class="stat-num" id="statDaysSince">—</div>
+            <div class="stat-label">Gün önce analiz</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Dashboard -->
+      <div class="dashboard-grid">
+        <!-- Sol: Ana içerik -->
+        <div>
+          <!-- Son Analiz -->
+          <div class="latest-analysis-card stagger-3" id="latestAnalysisCard">
+            <div class="section-header">
+              <h3 class="heading-3">Son Analiziniz</h3>
+              <a href="results.html" class="btn btn-ghost btn-sm">Detaylar →</a>
+            </div>
+
+            <div id="noAnalysis" class="empty-state" style="display:none;">
+              <div class="empty-icon">🔬</div>
+              <h3 class="heading-3" style="margin-bottom:10px;">Henüz analiz yapılmadı</h3>
+              <p style="color:var(--text-muted);margin-bottom:24px;">Cildinizi tanımak için ilk analizinizi yapın.</p>
+              <a href="analysis.html" class="btn btn-primary">🌸 Analiz Yap</a>
+            </div>
+
+            <div id="analysisContent" style="display:none;">
+              <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                <div style="width:60px;height:60px;background:var(--grad-pink-purple);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.75rem;" id="skinTypeIconDash">🌸</div>
+                <div>
+                  <div style="font-size:0.75rem;color:var(--text-muted);font-weight:600;">CİLT TİPİNİZ</div>
+                  <div style="font-family:'Outfit',sans-serif;font-size:1.375rem;font-weight:800;color:var(--text-primary);" id="skinTypeDash">—</div>
+                  <div style="font-size:0.8125rem;color:var(--text-muted);" id="lastAnalysisDate">—</div>
+                </div>
+              </div>
+
+              <div class="skin-metrics-row">
+                <div class="skin-metric-item">
+                  <div class="sm-label">💧 Nem Oranı</div>
+                  <div class="sm-value" id="moistureValue">—</div>
+                  <div class="progress-bar" style="margin-top:6px;">
+                    <div class="progress-fill" id="moistureBar" style="width:0%"></div>
+                  </div>
+                </div>
+                <div class="skin-metric-item">
+                  <div class="sm-label">🔴 Akne Seviyesi</div>
+                  <div class="sm-value" id="acneValue">—</div>
+                </div>
+                <div class="skin-metric-item">
+                  <div class="sm-label">🌡️ Hassasiyet</div>
+                  <div class="sm-value" id="sensitivityValue">—</div>
+                </div>
+                <div class="skin-metric-item">
+                  <div class="sm-label">🔍 Gözenek</div>
+                  <div class="sm-value" id="poresValue">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress Chart -->
+          <div class="chart-card stagger-4">
+            <div class="section-header">
+              <h3 class="heading-3">📈 İlerleme Takibi</h3>
+              <span class="chip chip-purple">Son 30 gün</span>
+            </div>
+            <canvas id="progressChart" height="180"></canvas>
+          </div>
+        </div>
+
+        <!-- Sağ: Sidebar -->
+        <div class="dashboard-sidebar">
+          <!-- AI Tip Kartı -->
+          <div class="ai-tip-card stagger-3">
+            <div class="ai-tip-header">
+              <div class="ai-tip-icon">🤖</div>
+              <div>
+                <div style="font-weight:700;color:var(--text-primary);font-size:0.9375rem;">AI Günlük Öneri</div>
+                <div style="font-size:0.75rem;color:var(--text-muted);">Cildinize özel ipuçları</div>
+              </div>
+            </div>
+            <div class="ai-tip-list" id="aiTipList">
+              <div class="ai-tip-item">🌊 Bugün en az 8 bardak su içmeyi unutmayın — cildiniz size teşekkür edecek!</div>
+              <div class="ai-tip-item">☀️ Dışarı çıkmadan önce güneş kremini uyguladınız mı?</div>
+              <div class="ai-tip-item">😴 Kaliteli uyku cilt yenilenmesini hızlandırır. Bu gece erken yatmaya çalışın.</div>
+            </div>
+          </div>
+
+          <!-- Hızlı İşlemler -->
+          <div class="latest-analysis-card stagger-4">
+            <h3 class="heading-3" style="margin-bottom:16px;">⚡ Hızlı İşlemler</h3>
+            <div class="quick-actions-grid">
+              <div class="quick-action-btn" onclick="window.location.href='analysis.html'">
+                <span class="qa-icon">📸</span>
+                <span class="qa-text">Analiz Yap</span>
+              </div>
+              <div class="quick-action-btn" onclick="window.location.href='ingredient-check.html'">
+                <span class="qa-icon">🔬</span>
+                <span class="qa-text">İçerik Kontrol</span>
+              </div>
+              <div class="quick-action-btn" onclick="window.location.href='results.html'">
+                <span class="qa-icon">📊</span>
+                <span class="qa-text">Sonuçlarım</span>
+              </div>
+              <div class="quick-action-btn" onclick="window.location.href='history.html'">
+                <span class="qa-icon">📅</span>
+                <span class="qa-text">Geçmişim</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sabah Rutini Özeti -->
+          <div class="ai-tip-card stagger-5" id="morningRoutineSummary" style="display:none;">
+            <div class="ai-tip-header">
+              <div class="ai-tip-icon" style="background:var(--grad-pink);">☀️</div>
+              <div>
+                <div style="font-weight:700;color:var(--text-primary);font-size:0.9375rem;">Sabah Rutininiz</div>
+                <div style="font-size:0.75rem;color:var(--text-muted);" id="routineStepCount">—</div>
+              </div>
+            </div>
+            <div id="morningRoutinePreview" class="ai-tip-list"></div>
+            <a href="results.html" class="btn btn-secondary btn-sm" style="width:100%;justify-content:center;margin-top:12px;">Tam Rutin →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    // Dashboard auth kontrolü
+    if (!Auth.isLoggedIn()) {
+      window.location.href = 'auth.html';
+    }
+
+    const user = Auth.getUser();
+
+    async function loadDashboard() {
+      // Welcome mesajı
+      if (user) {
+        const hour = new Date().getHours();
+        const greeting = hour < 12 ? 'Günaydın' : hour < 18 ? 'İyi günler' : 'İyi akşamlar';
+        document.getElementById('welcomeText').textContent = `${greeting}, ${user.name}! 👋`;
+      }
+
+      try {
+        // Son analiz
+        const historyData = await AnalysisAPI.getHistory();
+        const analyses = historyData.analyses || [];
+
+        document.getElementById('statAnalysisCount').textContent = analyses.length;
+
+        if (analyses.length > 0) {
+          const latest = analyses[0];
+          showLatestAnalysis(latest);
+
+          document.getElementById('statSkinType').textContent = latest.skin_type || '—';
+          document.getElementById('statMoisture').textContent = `${latest.moisture_level || '—'}%`;
+
+          const daysSince = Math.floor((Date.now() - new Date(latest.created_at)) / 86400000);
+          document.getElementById('statDaysSince').textContent = daysSince === 0 ? 'Bugün' : `${daysSince}`;
+
+          // AI tipler
+          if (latest.ai_comments?.length) {
+            document.getElementById('aiTipList').innerHTML = latest.ai_comments.map(c =>
+              `<div class="ai-tip-item">${c}</div>`
+            ).join('');
+          }
+
+          // Rutin önizleme
+          if (latest.morning_routine?.length) {
+            document.getElementById('morningRoutineSummary').style.display = 'block';
+            document.getElementById('routineStepCount').textContent = `${latest.morning_routine.length} adım`;
+            document.getElementById('morningRoutinePreview').innerHTML = latest.morning_routine.slice(0,3).map(s =>
+              `<div class="ai-tip-item">${s.icon} <strong>${s.product_type}</strong> — ${s.recommendation}</div>`
+            ).join('');
+          }
+
+          // Chart
+          renderProgressChart(analyses.slice(0, 7).reverse());
+        } else {
+          document.getElementById('noAnalysis').style.display = 'block';
+          renderProgressChart([]);
+        }
+      } catch (e) {
+        document.getElementById('noAnalysis').style.display = 'block';
+        renderProgressChart([]);
+      }
+    }
+
+    function showLatestAnalysis(analysis) {
+      document.getElementById('noAnalysis').style.display = 'none';
+      document.getElementById('analysisContent').style.display = 'block';
+
+      const icons = { 'Normal':'✨','Yağlı':'💧','Kuru':'🌵','Karma':'🔀','Hassas':'🌸' };
+      document.getElementById('skinTypeIconDash').textContent = icons[analysis.skin_type] || '🌸';
+      document.getElementById('skinTypeDash').textContent = analysis.skin_type || '—';
+
+      const date = new Date(analysis.created_at);
+      document.getElementById('lastAnalysisDate').textContent = date.toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric' });
+
+      document.getElementById('moistureValue').textContent = `%${analysis.moisture_level || '—'}`;
+      document.getElementById('moistureBar').style.width = `${analysis.moisture_level || 0}%`;
+      document.getElementById('acneValue').textContent = analysis.acne_level || '—';
+      document.getElementById('sensitivityValue').textContent = analysis.sensitivity || '—';
+      document.getElementById('poresValue').textContent = analysis.pores || '—';
+
+      // localStorage'a kaydet (sonuçlar sayfası için)
+      localStorage.setItem('skinsense_analysis', JSON.stringify(analysis));
+    }
+
+    function renderProgressChart(analyses) {
+      const ctx = document.getElementById('progressChart').getContext('2d');
+
+      const labels = analyses.map(a => new Date(a.created_at).toLocaleDateString('tr-TR', { day:'numeric', month:'short' }));
+      const moisture = analyses.map(a => a.moisture_level || 0);
+      const acneMap = { 'Yok': 0, 'Hafif': 25, 'Orta': 55, 'Yüksek': 85 };
+      const acne = analyses.map(a => acneMap[a.acne_level] || 0);
+
+      if (!labels.length) {
+        labels.push(...['Hf 1','Hf 2','Hf 3','Hf 4']);
+        moisture.push(0,0,0,0);
+        acne.push(0,0,0,0);
+      }
+
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Nem Oranı (%)',
+              data: moisture,
+              borderColor: '#9B72CF',
+              backgroundColor: 'rgba(155,114,207,0.1)',
+              tension: 0.4,
+              fill: true,
+              pointBackgroundColor: '#9B72CF',
+              pointRadius: 5,
+            },
+            {
+              label: 'Akne Seviyesi',
+              data: acne,
+              borderColor: '#E8B4B8',
+              backgroundColor: 'rgba(232,180,184,0.1)',
+              tension: 0.4,
+              fill: true,
+              pointBackgroundColor: '#E8B4B8',
+              pointRadius: 5,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top', labels: { color: '#6B4F72', font: { family: 'Inter', size: 12 } } },
+            tooltip: { mode: 'index', intersect: false }
+          },
+          scales: {
+            x: { grid: { color: 'rgba(203,153,197,0.1)' }, ticks: { color: '#9B87A0' } },
+            y: { grid: { color: 'rgba(203,153,197,0.1)' }, ticks: { color: '#9B87A0' }, min: 0, max: 100 }
+          }
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', loadDashboard);
+  </script>
+</body>
+</html>
